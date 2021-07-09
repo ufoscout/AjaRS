@@ -23,7 +23,7 @@ impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned
             },
         };
 
-        web::resource::<&str>(self.path.as_ref()).route(route).to(handler)
+        web::resource::<&str>(self.path.as_ref()).route(route.to(handler))
     }
     
 }
@@ -76,10 +76,12 @@ mod test {
                     .app_data(Data::new(()))
                     .service(rest_clone.handle(post_hello_world))
             })
-            .bind(&address_clone).unwrap().run().await.unwrap();
+            .bind(&address_clone).and_then(|ser| {
+                Ok(ser)
+            }).unwrap().run().await.unwrap();
         });
 
-        sleep(Duration::from_secs(1)).await;
+        sleep(Duration::from_millis(200)).await;
 
         // Start client
         let req = RestReqwest::new(reqwest::ClientBuilder::new().build().unwrap(), format!("http://{}", address));

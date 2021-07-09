@@ -14,7 +14,7 @@ reqwest = { version = "0.11", default-features = false, features = ["json"], opt
 actix-rt = "2"
 port_check = "0.1"
 rand = "0.8"
-#tokio = { version = "1", features = ["full"]}
+tokio = { version = "1", features = ["full"]}
 
 [features]
 client_reqwest = ["reqwest"]
