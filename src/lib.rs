@@ -3,9 +3,9 @@ use std::marker::PhantomData;
 use serde::{Serialize, de::DeserializeOwned};
 
 #[cfg(feature = "server_actix_web")]
-mod actix_web;
+pub mod actix_web;
 #[cfg(feature = "client_reqwest")]
-mod reqwest;
+pub mod reqwest;
 
 #[derive(Clone)]
 pub enum HttpMethod {

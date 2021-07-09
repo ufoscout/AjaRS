@@ -5,11 +5,13 @@ use crate::Rest;
 
 impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
 
-    pub async fn reqwest(&self, client: &Client, data: &I) -> Result<O, reqwest::Error> {
+    pub async fn reqwest(&self, client: &Client, base_url: &str, data: &I) -> Result<O, reqwest::Error> {
+
+        let url = format!("{}{}", base_url, self.path);
 
         let req = match self.method {
-            crate::HttpMethod::GET => client.get(self.path),
-            crate::HttpMethod::POST => client.post(self.path),
+            crate::HttpMethod::GET => client.get(&url),
+            crate::HttpMethod::POST => client.post(&url),
         };
 
         req
@@ -20,4 +22,24 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
         .await
     }
 
+}
+
+#[derive(Clone)]
+pub struct RestReqwest {
+    client: Client,
+    base_url: String,
+}
+
+impl RestReqwest {
+
+    pub fn new(client: Client, base_url: String) -> Self {
+        Self {
+            client,
+            base_url
+        }
+    }
+
+    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned>(&self, rest: &Rest<I,O>, data: &I) -> Result<O, reqwest::Error> {
+        rest.reqwest(&self.client, &self.base_url, data).await
+    }
 }
