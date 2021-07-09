@@ -7,11 +7,13 @@ mod actix_web;
 #[cfg(feature = "client_reqwest")]
 mod reqwest;
 
+#[derive(Clone)]
 pub enum HttpMethod {
     GET,
     POST
 }
 
+#[derive(Clone)]
 pub struct Rest<I: DeserializeOwned, O: Serialize> {
     path: &'static str,
     method: HttpMethod,
