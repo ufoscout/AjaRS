@@ -71,25 +71,39 @@ where
 #[cfg(test)]
 mod test {
 
+    use std::fmt::Display;
+
     use actix_web::{App, HttpServer};
 
     use super::*;
 
+    #[derive(Debug, Clone)]
+    struct MyError {}
+
+    impl Display for MyError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Ok(())
+        }
+    }
+    
+    impl error::ResponseError for MyError {}
+
     #[test]
     fn const_builder() {
         let rest = Rest::<String, String>::get("/api/hello/world");
+        
         let free_port = port_check::free_local_port().unwrap();
         let address = format!("0.0.0.0:{}", free_port);
 
         HttpServer::new(move || {
             App::new()
-                .service(web::auth::build_auth_api(Api::new(web_auth_service.clone(), oregold_module.oregold_auth_module.auth_api.clone())))
-                .service(web::core::build_core_api(Api::new(web_auth_service.clone(), oregold_module.oregold_core_module.core_api.clone())))
-                .service(web::logs::build_log_api(Api::new(web_auth_service.clone(), oregold_module.oregold_log_module.log_api.clone())))
-                .service(web::market::build_market_api(web_auth_service.clone(), &oregold_module))
-                .service(web::um::build_um_api(web_auth_service.clone(), &oregold_module))
+                .service(rest.to_resource(post_hello_world))
         })
         .bind(&address).unwrap();
+    }
+
+    async fn post_hello_world(request: HttpRequest, data: Data<String>, body: Json<String>) -> Result<Json<String>, MyError> {
+        unimplemented!()
     }
 
 }
