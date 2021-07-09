@@ -16,11 +16,9 @@ impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned
     {
         let route = match self.method {
             crate::HttpMethod::GET => {
-                println!("CREATE GET ROUTE");
                 web::get()
             },
             crate::HttpMethod::POST => {
-                println!("CREATE POST ROUTE");
                 web::post()
             },
         };

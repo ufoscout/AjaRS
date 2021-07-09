@@ -7,8 +7,8 @@ edition = "2018"
 
 [dependencies]
 serde = "1"
-actix-web = { version = "4.0.0-beta.8", default-features = false, optional = true}
-reqwest = { version = "0.11", default-features = false, features = ["json"], optional = true}
+actix-web = { version = "4.0.0-beta.8", default-features = false, optional = true }
+reqwest = { version = "0.11", default-features = false, features = ["json"], optional = true }
 
 [dev-dependencies]
 actix-rt = "2"
