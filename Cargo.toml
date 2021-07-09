@@ -1,0 +1,19 @@
+[package]
+name = "ajars"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1"
+actix-web = { version = "4.0.0-beta.8", optional = true}
+reqwest = { version = "0.11", default-features = false, optional = true}
+
+[dev-dependencies]
+tokio = "1"
+port_check = "0.1"
+
+[features]
+client_reqwest = ["reqwest"]
+server_actix_web = ["actix-web"]
