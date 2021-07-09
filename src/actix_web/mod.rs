@@ -5,14 +5,14 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::Rest;
 
-impl <I: DeserializeOwned + Clone + 'static, O: Serialize + Clone + 'static> Rest<I, O> {
+impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static> Rest<I, O> {
 
-    pub fn to_resource<F, D, R>(&self, handler: F) -> Resource
+    pub fn handle<F, D, R, E>(&self, handler: F) -> Resource
     where
         F: Handler<(HttpRequest, Data<D>, Json<I>), R>,
         D: 'static,
-        R: Future + 'static,
-        R::Output: Responder + 'static,
+        R: Future<Output = Result<Json<O>, E>> + 'static,
+        E: ResponseError + 'static
     {
         let route = match self.method {
             crate::HttpMethod::GET => web::get(),
@@ -53,7 +53,7 @@ mod test {
 
         HttpServer::new(move || {
             App::new()
-                .service(rest.to_resource(post_hello_world))
+                .service(rest.handle(post_hello_world))
         })
         .bind(&address).unwrap();
     }

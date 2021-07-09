@@ -1,17 +1,23 @@
+use reqwest::Client;
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::Rest;
 
-impl <I: DeserializeOwned, O: Serialize> Rest<I, O> {
+impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
 
-    /*
-    pub fn reqwest(&self) -> Resource {
-        let route = match self.method {
-            crate::HttpMethod::GET => web::get(),
-            crate::HttpMethod::POST => web::post(),
+    pub async fn reqwest(&self, client: &Client, data: &I) -> Result<O, reqwest::Error> {
+
+        let req = match self.method {
+            crate::HttpMethod::GET => client.get(self.path),
+            crate::HttpMethod::POST => client.post(self.path),
         };
-        web::resource::<&str>(self.path.as_ref()).route(route)
+
+        req
+        .json(data)
+        .send()
+        .await?
+        .json()
+        .await
     }
-    */
 
 }

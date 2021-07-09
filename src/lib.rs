@@ -14,14 +14,14 @@ pub enum HttpMethod {
 }
 
 #[derive(Clone)]
-pub struct Rest<I: DeserializeOwned, O: Serialize> {
+pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
     path: &'static str,
     method: HttpMethod,
     input: PhantomData<I>,
     output: PhantomData<O>,
 }
 
-impl <I: DeserializeOwned, O: Serialize> Rest<I, O> {
+impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
     
     pub fn builder(method: HttpMethod, path: &'static str) -> Self {
         Self {
