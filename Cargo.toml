@@ -11,8 +11,10 @@ actix-web = { version = "4.0.0-beta.8", default-features = false, optional = tru
 reqwest = { version = "0.11", default-features = false, features = ["json"], optional = true}
 
 [dev-dependencies]
-tokio = "1"
+actix-rt = "2"
 port_check = "0.1"
+rand = "0.8"
+#tokio = { version = "1", features = ["full"]}
 
 [features]
 client_reqwest = ["reqwest"]

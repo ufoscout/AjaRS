@@ -15,6 +15,7 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
         };
 
         req
+        .header("Content-Type", "application/json")
         .json(data)
         .send()
         .await?

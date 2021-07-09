@@ -40,19 +40,3 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
         Rest::builder(HttpMethod::POST, path)
     }
 }
-
-#[cfg(test)]
-mod test {
-
-    use super::*;
-
-    fn rest() -> Rest<String, String> {
-         Rest::get("/api/hello/world")
-    }
-
-    #[test]
-    fn const_builder() {
-        let rest = rest();
-    }
-
-}
