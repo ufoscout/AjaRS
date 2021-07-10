@@ -110,3 +110,78 @@ mod actix_web_reqwest_it {
         assert_eq!(req_data, response.unwrap());
     }
 }
+
+#[cfg(feature = "client_surf")]
+mod actix_web_surf_it {
+
+    use super::*;
+    use actix_web::web::Data;
+    use ajars::{surf::RestSurf, Rest};
+
+    #[actix_rt::test]
+    async fn test_surf_rest() {
+        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::delete(format!(
+            "/api/{}",
+            rand::random::<usize>()
+        )))
+        .await;
+        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::get(format!(
+            "/api/{}",
+            rand::random::<usize>()
+        )))
+        .await;
+        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::post(format!(
+            "/api/{}",
+            rand::random::<usize>()
+        )))
+        .await;
+        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::put(format!(
+            "/api/{}",
+            rand::random::<usize>()
+        )))
+        .await;
+    }
+
+    async fn perform_surf_call(rest: &Rest<Simple<String>, Simple<String>>) {
+        // Arrange
+        let free_port = port_check::free_local_port().unwrap();
+        let address = format!("127.0.0.1:{}", free_port);
+
+        // Start Server
+        let address_clone = address.clone();
+        let rest_clone = rest.clone();
+
+        spawn(async move {
+            println!("Start actix-web to {}", address_clone);
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(Data::new(()))
+                    .service(rest_clone.handle(echo))
+            })
+            .bind(&address_clone)
+            .and_then(|ser| Ok(ser))
+            .unwrap()
+            .run()
+            .await
+            .unwrap();
+        });
+
+        sleep(Duration::from_millis(200)).await;
+
+        // Start client
+        let req = RestSurf::new(
+            surf::client(),
+            format!("http://{}", address),
+        );
+
+        let req_data = Simple {
+            inner: format!("{}", rand::random::<usize>()),
+        };
+
+        // Act
+        let response = req.submit(&rest, &req_data).await;
+
+        // Assert
+        assert_eq!(req_data, response.unwrap());
+    }
+}

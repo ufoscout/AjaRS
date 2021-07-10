@@ -6,6 +6,8 @@ use serde::{de::DeserializeOwned, Serialize};
 pub mod actix_web;
 #[cfg(feature = "client_reqwest")]
 pub mod reqwest;
+#[cfg(feature = "client_surf")]
+pub mod surf;
 
 #[derive(Clone)]
 pub enum HttpMethod {
