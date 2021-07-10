@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[cfg(feature = "server_actix_web")]
 pub mod actix_web;
@@ -23,8 +23,7 @@ pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned
     output: PhantomData<O>,
 }
 
-impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
-    
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
     pub fn builder<P: Into<String>>(method: HttpMethod, path: P) -> Self {
         Self {
             method,
@@ -37,11 +36,11 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
     pub fn delete<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::DELETE, path)
     }
-    
+
     pub fn get<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::GET, path)
     }
-    
+
     pub fn post<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::POST, path)
     }
