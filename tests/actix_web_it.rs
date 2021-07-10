@@ -1,3 +1,5 @@
+#![cfg(feature = "server_actix_web")]
+
 use actix_rt::spawn;
 use actix_rt::time::sleep;
 use actix_web::web::{Data, Json};
