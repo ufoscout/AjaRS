@@ -17,7 +17,6 @@ pub enum HttpMethod {
     PUT,
 }
 
-#[derive(Clone)]
 pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
     path: String,
     method: HttpMethod,
@@ -25,8 +24,21 @@ pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned
     output: PhantomData<O>,
 }
 
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone
+    for Rest<I, O>
+{
+    fn clone(&self) -> Self {
+        Self {
+            path: self.path.clone(),
+            method: self.method.clone(),
+            input: PhantomData,
+            output: PhantomData,
+        }
+    }
+}
+
 impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
-    pub fn builder<P: Into<String>>(method: HttpMethod, path: P) -> Self {
+    pub fn new<P: Into<String>>(method: HttpMethod, path: P) -> Self {
         Self {
             method,
             path: path.into(),
@@ -36,18 +48,18 @@ impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O
     }
 
     pub fn delete<P: Into<String>>(path: P) -> Self {
-        Rest::builder(HttpMethod::DELETE, path)
+        Rest::new(HttpMethod::DELETE, path)
     }
 
     pub fn get<P: Into<String>>(path: P) -> Self {
-        Rest::builder(HttpMethod::GET, path)
+        Rest::new(HttpMethod::GET, path)
     }
 
     pub fn post<P: Into<String>>(path: P) -> Self {
-        Rest::builder(HttpMethod::POST, path)
+        Rest::new(HttpMethod::POST, path)
     }
 
     pub fn put<P: Into<String>>(path: P) -> Self {
-        Rest::builder(HttpMethod::PUT, path)
+        Rest::new(HttpMethod::PUT, path)
     }
 }
