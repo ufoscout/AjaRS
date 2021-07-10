@@ -9,15 +9,19 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
 
         let url = format!("{}{}", base_url, self.path);
 
-        let req = match self.method {
-            crate::HttpMethod::GET => client.get(&url),
-            crate::HttpMethod::POST => client.post(&url),
+        let request = match self.method {
+            crate::HttpMethod::GET => {
+                client.get(&url)
+                .header("Content-Type", "application/json")
+                .query(data)
+            }
+            crate::HttpMethod::POST => {
+                client.post(&url).header("Content-Type", "application/json")
+                .json(data)
+            }
         };
 
-        req
-        .header("Content-Type", "application/json")
-        .json(data)
-        .send()
+        request.send()
         .await?
         .json()
         .await
