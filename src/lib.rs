@@ -15,7 +15,7 @@ pub enum HttpMethod {
 
 #[derive(Clone)]
 pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
-    path: &'static str,
+    path: String,
     method: HttpMethod,
     input: PhantomData<I>,
     output: PhantomData<O>,
@@ -23,20 +23,20 @@ pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned
 
 impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
     
-    pub fn builder(method: HttpMethod, path: &'static str) -> Self {
+    pub fn builder<P: Into<String>>(method: HttpMethod, path: P) -> Self {
         Self {
             method,
-            path,
+            path: path.into(),
             input: PhantomData,
             output: PhantomData,
         }
     }
 
-    pub fn get(path: &'static str) -> Self {
+    pub fn get<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::GET, path)
     }
     
-    pub fn post(path: &'static str) -> Self {
+    pub fn post<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::POST, path)
     }
 }
