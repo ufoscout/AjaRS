@@ -9,19 +9,28 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::Rest;
 
-impl<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static>
-    Rest<I, O>
+pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static> {
+    fn handle<H, D, R, E>(&self, handler: H) -> Resource
+    where
+        H: Handler<D, R, E, I, O>,
+        D: 'static,
+        R: Future<Output = Result<Json<O>, E>> + 'static,
+        E: ResponseError + 'static;
+}
+
+impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: Rest<I,O>> HandleActix<I, O>
+    for REST
 {
-    pub fn handle<H, D, R, E>(&self, handler: H) -> Resource
+    fn handle<H, D, R, E>(&self, handler: H) -> Resource
     where
         H: Handler<D, R, E, I, O>,
         D: 'static,
         R: Future<Output = Result<Json<O>, E>> + 'static,
         E: ResponseError + 'static,
     {
-        let resource = web::resource::<&str>(self.path.as_ref());
+        let resource = web::resource::<&str>(self.path());
 
-        match self.method {
+        match self.method() {
             crate::HttpMethod::DELETE => {
                 resource.route(web::delete().to(QueryHandlerWrapper::new(handler)))
             }

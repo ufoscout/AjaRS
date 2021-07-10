@@ -17,7 +17,13 @@ pub enum HttpMethod {
     PUT,
 }
 
-pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
+
+pub trait Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
+    fn path(&self) -> &str;
+    fn method(&self) -> &HttpMethod;
+}
+
+pub struct RestImpl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
     path: String,
     method: HttpMethod,
     input: PhantomData<I>,
@@ -25,7 +31,7 @@ pub struct Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned
 }
 
 impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone
-    for Rest<I, O>
+    for RestImpl<I, O>
 {
     fn clone(&self) -> Self {
         Self {
@@ -37,7 +43,19 @@ impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone
     }
 }
 
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
+    for RestImpl<I, O>
+{
+    fn path(&self) -> &str {
+        &self.path
+    }
+
+    fn method(&self) -> &HttpMethod {
+        &self.method
+    }
+}
+
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> RestImpl<I, O> {
     pub fn new<P: Into<String>>(method: HttpMethod, path: P) -> Self {
         Self {
             method,
@@ -48,18 +66,18 @@ impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O
     }
 
     pub fn delete<P: Into<String>>(path: P) -> Self {
-        Rest::new(HttpMethod::DELETE, path)
+        RestImpl::new(HttpMethod::DELETE, path)
     }
 
     pub fn get<P: Into<String>>(path: P) -> Self {
-        Rest::new(HttpMethod::GET, path)
+        RestImpl::new(HttpMethod::GET, path)
     }
 
     pub fn post<P: Into<String>>(path: P) -> Self {
-        Rest::new(HttpMethod::POST, path)
+        RestImpl::new(HttpMethod::POST, path)
     }
 
     pub fn put<P: Into<String>>(path: P) -> Self {
-        Rest::new(HttpMethod::PUT, path)
+        RestImpl::new(HttpMethod::PUT, path)
     }
 }

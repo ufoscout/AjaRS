@@ -41,33 +41,33 @@ mod actix_web_reqwest_it {
 
     use super::*;
     use actix_web::web::Data;
-    use ajars::{reqwest::RestReqwest, Rest};
+    use ajars::{RestImpl, actix_web::HandleActix, reqwest::RestReqwest};
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
-        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::delete(format!(
+        perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::delete(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::get(format!(
+        perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::get(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::post(format!(
+        perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::post(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::put(format!(
+        perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::put(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
     }
 
-    async fn perform_reqwest_call(rest: &Rest<Simple<String>, Simple<String>>) {
+    async fn perform_reqwest_call(rest: &RestImpl<Simple<String>, Simple<String>>) {
         // Arrange
         let free_port = port_check::free_local_port().unwrap();
         let address = format!("127.0.0.1:{}", free_port);
@@ -104,7 +104,7 @@ mod actix_web_reqwest_it {
         };
 
         // Act
-        let response = req.submit(&rest, &req_data).await;
+        let response = req.submit(rest, &req_data).await;
 
         // Assert
         assert_eq!(req_data, response.unwrap());
@@ -116,33 +116,33 @@ mod actix_web_surf_it {
 
     use super::*;
     use actix_web::web::Data;
-    use ajars::{surf::RestSurf, Rest};
+    use ajars::{RestImpl, actix_web::HandleActix, surf::RestSurf};
 
     #[actix_rt::test]
     async fn test_surf_rest() {
-        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::delete(format!(
+        perform_surf_call(&RestImpl::<Simple<String>, Simple<String>>::delete(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::get(format!(
+        perform_surf_call(&RestImpl::<Simple<String>, Simple<String>>::get(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::post(format!(
+        perform_surf_call(&RestImpl::<Simple<String>, Simple<String>>::post(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
-        perform_surf_call(&Rest::<Simple<String>, Simple<String>>::put(format!(
+        perform_surf_call(&RestImpl::<Simple<String>, Simple<String>>::put(format!(
             "/api/{}",
             rand::random::<usize>()
         )))
         .await;
     }
 
-    async fn perform_surf_call(rest: &Rest<Simple<String>, Simple<String>>) {
+    async fn perform_surf_call(rest: &RestImpl<Simple<String>, Simple<String>>) {
         // Arrange
         let free_port = port_check::free_local_port().unwrap();
         let address = format!("127.0.0.1:{}", free_port);
@@ -179,7 +179,7 @@ mod actix_web_surf_it {
         };
 
         // Act
-        let response = req.submit(&rest, &req_data).await;
+        let response = req.submit(rest, &req_data).await;
 
         // Assert
         assert_eq!(req_data, response.unwrap());

@@ -3,32 +3,6 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::Rest;
 
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> {
-    pub async fn reqwest(
-        &self,
-        client: &Client,
-        base_url: &str,
-        data: &I,
-    ) -> Result<O, reqwest::Error> {
-        let url = format!("{}{}", base_url, self.path);
-
-        let request = match self.method {
-            crate::HttpMethod::DELETE => client.delete(&url).query(data),
-            crate::HttpMethod::GET => client.get(&url).query(data),
-            crate::HttpMethod::POST => client
-                .post(&url)
-                .header("Content-Type", "application/json")
-                .json(data),
-            crate::HttpMethod::PUT => client
-                .put(&url)
-                .header("Content-Type", "application/json")
-                .json(data),
-        };
-
-        request.send().await?.json().await
-    }
-}
-
 #[derive(Clone)]
 pub struct RestReqwest {
     client: Client,
@@ -36,15 +10,31 @@ pub struct RestReqwest {
 }
 
 impl RestReqwest {
+
     pub fn new(client: Client, base_url: String) -> Self {
         Self { client, base_url }
     }
 
-    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned>(
+    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
         &self,
-        rest: &Rest<I, O>,
+        rest: &REST,
         data: &I,
     ) -> Result<O, reqwest::Error> {
-        rest.reqwest(&self.client, &self.base_url, data).await
+        let url = format!("{}{}", &self.base_url, rest.path());
+
+        let request = match rest.method() {
+            crate::HttpMethod::DELETE => self.client.delete(&url).query(data),
+            crate::HttpMethod::GET => self.client.get(&url).query(data),
+            crate::HttpMethod::POST => self.client
+                .post(&url)
+                .header("Content-Type", "application/json")
+                .json(data),
+            crate::HttpMethod::PUT => self.client
+                .put(&url)
+                .header("Content-Type", "application/json")
+                .json(data),
+        };
+
+        request.send().await?.json().await
     }
 }
