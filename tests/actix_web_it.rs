@@ -24,6 +24,7 @@ impl ResponseError for MyError {}
 
 async fn echo(request: HttpRequest, _data: Data<()>, body: Simple<String>) -> Result<Json<Simple<String>>, MyError> {
     println!("echo - Request path: {:?}", request.path());
+    println!("echo - Request method: {:?}", request.method());
     println!("echo - Request query_string: {:?}", request.query_string());
     println!("echo - Request body: {:?}", body);
     Ok(Json(body))
@@ -38,8 +39,10 @@ mod actix_web_reqwest_it {
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
+        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::delete(format!("/api/{}", rand::random::<usize>()))).await;
         perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::get(format!("/api/{}", rand::random::<usize>()))).await;
         perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::post(format!("/api/{}", rand::random::<usize>()))).await;
+        perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::put(format!("/api/{}", rand::random::<usize>()))).await;
     }
 
 

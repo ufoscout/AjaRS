@@ -17,11 +17,17 @@ impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned
         let resource = web::resource::<&str>(self.path.as_ref());
 
         match self.method {
+            crate::HttpMethod::DELETE => {
+                resource.route(web::delete().to(QueryHandlerWrapper::new(handler)))
+            },
             crate::HttpMethod::GET => {
                 resource.route(web::get().to(QueryHandlerWrapper::new(handler)))
             },
             crate::HttpMethod::POST => {
                 resource.route(web::post().to(JsonHandlerWrapper::new(handler)))
+            },
+            crate::HttpMethod::PUT => {
+                resource.route(web::put().to(JsonHandlerWrapper::new(handler)))
             },
         }
     }

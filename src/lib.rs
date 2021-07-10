@@ -9,8 +9,10 @@ pub mod reqwest;
 
 #[derive(Clone)]
 pub enum HttpMethod {
+    DELETE,
     GET,
-    POST
+    POST,
+    PUT,
 }
 
 #[derive(Clone)]
@@ -32,11 +34,19 @@ impl <I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, 
         }
     }
 
+    pub fn delete<P: Into<String>>(path: P) -> Self {
+        Rest::builder(HttpMethod::DELETE, path)
+    }
+    
     pub fn get<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::GET, path)
     }
     
     pub fn post<P: Into<String>>(path: P) -> Self {
         Rest::builder(HttpMethod::POST, path)
+    }
+
+    pub fn put<P: Into<String>>(path: P) -> Self {
+        Rest::builder(HttpMethod::PUT, path)
     }
 }
