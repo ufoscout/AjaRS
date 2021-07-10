@@ -22,11 +22,11 @@ impl Display for MyError {
 
 impl ResponseError for MyError {}
 
-async fn echo(request: HttpRequest, _data: Data<()>, body: Json<Simple<String>>) -> Result<Json<Simple<String>>, MyError> {
+async fn echo(request: HttpRequest, _data: Data<()>, body: Simple<String>) -> Result<Json<Simple<String>>, MyError> {
     println!("echo - Request path: {:?}", request.path());
     println!("echo - Request query_string: {:?}", request.query_string());
     println!("echo - Request body: {:?}", body);
-    Ok(body)
+    Ok(Json(body))
 }
 
 #[cfg(feature = "client_reqwest")]
