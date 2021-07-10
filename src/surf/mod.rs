@@ -14,9 +14,9 @@ impl RestSurf {
         Self { client, base_url }
     }
 
-    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned>(
+    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
         &self,
-        rest: &dyn Rest<I, O>,
+        rest: &REST,
         data: &I,
     ) -> Result<O, surf::Error> {
         let url = format!("{}{}", self.base_url, rest.path());
