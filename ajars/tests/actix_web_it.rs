@@ -41,7 +41,7 @@ async fn echo(
 mod actix_web_reqwest_it {
 
     use super::*;
-    use ajars::reqwest::{reqwest::ClientBuilder, RestReqwest};
+    use ajars::reqwest::{reqwest::ClientBuilder, AjarsReqwest};
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
@@ -94,7 +94,7 @@ mod actix_web_reqwest_it {
         sleep(Duration::from_millis(200)).await;
 
         // Start client
-        let req = RestReqwest::new(
+        let ajars = AjarsReqwest::new(
             ClientBuilder::new().build().unwrap(),
             format!("http://{}", address),
         );
@@ -104,7 +104,7 @@ mod actix_web_reqwest_it {
         };
 
         // Act
-        let response = req.submit(rest, &req_data).await;
+        let response = ajars.request(rest).send(&req_data).await;
 
         // Assert
         assert_eq!(req_data, response.unwrap());

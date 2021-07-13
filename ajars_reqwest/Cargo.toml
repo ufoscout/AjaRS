@@ -14,5 +14,6 @@ keywords = []
 
 [dependencies]
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
+http = {version = "0.2", default-features = false }
 reqwest = { version = "0.11", default-features = false, features = ["json"] }
 serde = "1"
