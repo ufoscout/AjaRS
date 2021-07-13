@@ -41,7 +41,7 @@ async fn echo(
 mod actix_web_reqwest_it {
 
     use super::*;
-    use ajars::reqwest::{reqwest::ClientBuilder, AjarsReqwest};
+    use ajars::{Rest, RestConst, reqwest::{reqwest::ClientBuilder, AjarsReqwest}};
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
@@ -50,10 +50,7 @@ mod actix_web_reqwest_it {
             rand::random::<usize>()
         )))
         .await;
-        perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::get(format!(
-            "/api/{}",
-            rand::random::<usize>()
-        )))
+        perform_reqwest_call(&RestConst::<Simple<String>, Simple<String>>::get("/api/const"))
         .await;
         perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::post(format!(
             "/api/{}",
@@ -67,7 +64,7 @@ mod actix_web_reqwest_it {
         .await;
     }
 
-    async fn perform_reqwest_call(rest: &RestImpl<Simple<String>, Simple<String>>) {
+    async fn perform_reqwest_call<REST: 'static + Clone + Send + Rest<Simple<String>, Simple<String>>>(rest: &REST) {
         // Arrange
         let free_port = port_check::free_local_port().unwrap();
         let address = format!("127.0.0.1:{}", free_port);
