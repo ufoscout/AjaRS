@@ -7,7 +7,7 @@ declare -a publish_list=(
     "ajars_core"
     "ajars_actix_web"
     "ajars_reqwest"
-    "ajars_reqwest"
+    "ajars"
 )
 
 echo 'Attempt ''cargo check'' before publishing'
