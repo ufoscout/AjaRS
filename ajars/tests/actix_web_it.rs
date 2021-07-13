@@ -1,9 +1,10 @@
-#![cfg(feature = "server_actix_web")]
+#![cfg(feature = "actix_web")]
 
 use actix_rt::spawn;
 use actix_rt::time::sleep;
-use actix_web::web::{Data, Json};
-use actix_web::{App, HttpRequest, HttpServer, ResponseError};
+use ajars::{RestImpl, actix_web::HandleActix};
+use ajars_actix_web::actix_web::web::{Data, Json};
+use ajars_actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::time::Duration;
@@ -36,12 +37,11 @@ async fn echo(
     Ok(Json(body))
 }
 
-#[cfg(feature = "client_reqwest")]
+#[cfg(feature = "reqwest")]
 mod actix_web_reqwest_it {
 
     use super::*;
-    use actix_web::web::Data;
-    use ajars::{RestImpl, actix_web::HandleActix, reqwest::RestReqwest};
+    use ajars::reqwest::{reqwest::ClientBuilder, RestReqwest};
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
@@ -95,7 +95,7 @@ mod actix_web_reqwest_it {
 
         // Start client
         let req = RestReqwest::new(
-            reqwest::ClientBuilder::new().build().unwrap(),
+            ClientBuilder::new().build().unwrap(),
             format!("http://{}", address),
         );
 
@@ -111,12 +111,11 @@ mod actix_web_reqwest_it {
     }
 }
 
-#[cfg(feature = "client_surf")]
+#[cfg(feature = "surf")]
 mod actix_web_surf_it {
 
     use super::*;
-    use actix_web::web::Data;
-    use ajars::{RestImpl, actix_web::HandleActix, surf::RestSurf};
+    use ajars::surf::surf::RestSurf;
 
     #[actix_rt::test]
     async fn test_surf_rest() {

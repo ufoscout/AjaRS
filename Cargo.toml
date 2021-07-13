@@ -1,8 +1,8 @@
 [workspace]
 
 members = [
-    "ajars",
     "ajars_core",
     "ajars_actix_web",
     "ajars_reqwest",
+    "ajars",
 ] 

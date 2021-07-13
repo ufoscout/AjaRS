@@ -1,6 +1,6 @@
 [package]
 name = "ajars_reqwest"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -16,11 +16,3 @@ keywords = []
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
 reqwest = { version = "0.11", default-features = false, features = ["json"] }
 serde = "1"
-
-[dev-dependencies]
-actix-rt = "2"
-actix-web = { version = "4.0.0-beta.8", default-features = false }
-ajars_actix_web = { path = "../ajars_actix_web", version = "0.2.0" }
-port_check = "0.1"
-rand = "0.8"
-tokio = { version = "1", features = ["full"]}

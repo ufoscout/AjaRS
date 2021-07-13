@@ -1,6 +1,6 @@
 [package]
-name = "ajars"
-version = "0.1.0"
+name = "ajars_surf"
+version = "0.2.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -13,19 +13,6 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ajars_core = { path = "../ajars_core", version = "0.2.0" }
 serde = "1"
-actix-web = { version = "4.0.0-beta.8", default-features = false, optional = true }
-reqwest = { version = "0.11", default-features = false, features = ["json"], optional = true }
-#surf = { version = "2", default-features = false, optional = true }
-
-[dev-dependencies]
-actix-rt = "2"
-port_check = "0.1"
-rand = "0.8"
-tokio = { version = "1", features = ["full"]}
-#surf = { version = "2", default-features = false, features =  ["curl-client"] }
-
-[features]
-client_reqwest = ["reqwest"]
-#client_surf = ["surf"]
-server_actix_web = ["actix-web"]
+surf = { version = "2", default-features = false }

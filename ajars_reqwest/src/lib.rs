@@ -1,6 +1,10 @@
 use ajars_core::{HttpMethod, Rest};
-use reqwest::Client;
+use crate::reqwest::Client;
 use serde::{de::DeserializeOwned, Serialize};
+
+pub mod reqwest {
+    pub use reqwest::*;
+}
 
 #[derive(Clone)]
 pub struct RestReqwest {

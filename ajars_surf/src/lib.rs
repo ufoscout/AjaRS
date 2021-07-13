@@ -1,147 +1,42 @@
-use std::marker::PhantomData;
-
+use ajars_core::{HttpMethod, Rest};
 use serde::{de::DeserializeOwned, Serialize};
+use crate::surf::Client;
 
-#[cfg(feature = "server_actix_web")]
-pub mod actix_web;
-#[cfg(feature = "client_reqwest")]
-pub mod reqwest;
-#[cfg(feature = "client_surf")]
-pub mod surf;
+pub mod surf {
+    pub use surf::*;
+}
 
 #[derive(Clone)]
-pub enum HttpMethod {
-    DELETE,
-    GET,
-    POST,
-    PUT,
+pub struct RestSurf {
+    client: Client,
+    base_url: String,
 }
 
-pub trait Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
-
-    fn new<P: Into<String>>(method: HttpMethod, path: P) -> RestImpl<I, O> {
-        RestImpl::new(method, path)
+impl RestSurf {
+    pub fn new(client: Client, base_url: String) -> Self {
+        Self { client, base_url }
     }
 
-    fn path(&self) -> &str;
-    fn method(&self) -> &HttpMethod;
-}
+    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
+        &self,
+        rest: &REST,
+        data: &I,
+    ) -> Result<O, surf::Error> {
+        let url = format!("{}{}", self.base_url, rest.path());
 
-pub struct RestConst<I, O> {
-    path: &'static str,
-    method: HttpMethod,
-    input: PhantomData<I>,
-    output: PhantomData<O>,
-}
+        let request = match rest.method() {
+            HttpMethod::DELETE => self.client.delete(&url).query(data)?,
+            HttpMethod::GET => self.client.get(&url).query(data)?,
+            HttpMethod::POST => self.client
+                .post(&url)
+                .header("Content-Type", "application/json")
+                .body(surf::Body::from_json(data)?),
+            HttpMethod::PUT => self.client
+                .put(&url)
+                .header("Content-Type", "application/json")
+                .body(surf::Body::from_json(data)?),
+        };
 
-impl<I, O> Clone
-    for RestConst<I, O>
-{
-    fn clone(&self) -> Self {
-        Self {
-            path: self.path,
-            method: self.method.clone(),
-            input: PhantomData,
-            output: PhantomData,
-        }
-    }
-}
-
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
-    for RestConst<I, O>
-{
-    fn path(&self) -> &str {
-        self.path
-    }
-
-    fn method(&self) -> &HttpMethod {
-        &self.method
-    }
-}
-
-impl<I, O> RestConst<I, O> {
-    pub const fn new(method: HttpMethod, path: &'static str) -> Self {
-        Self {
-            method,
-            path,
-            input: PhantomData,
-            output: PhantomData,
-        }
-    }
-
-    pub fn delete(path: &'static str) -> Self {
-        Self::new(HttpMethod::DELETE, path)
-    }
-
-    pub fn get(path: &'static str) -> Self {
-        Self::new(HttpMethod::GET, path)
-    }
-
-    pub fn post(path: &'static str) -> Self {
-        Self::new(HttpMethod::POST, path)
-    }
-
-    pub fn put(path: &'static str) -> Self {
-        Self::new(HttpMethod::PUT, path)
-    }
-}
-
-
-pub struct RestImpl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
-    path: String,
-    method: HttpMethod,
-    input: PhantomData<I>,
-    output: PhantomData<O>,
-}
-
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone
-    for RestImpl<I, O>
-{
-    fn clone(&self) -> Self {
-        Self {
-            path: self.path.clone(),
-            method: self.method.clone(),
-            input: PhantomData,
-            output: PhantomData,
-        }
-    }
-}
-
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
-    for RestImpl<I, O>
-{
-    fn path(&self) -> &str {
-        &self.path
-    }
-
-    fn method(&self) -> &HttpMethod {
-        &self.method
-    }
-}
-
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> RestImpl<I, O> {
-    pub fn new<P: Into<String>>(method: HttpMethod, path: P) -> Self {
-        Self {
-            method,
-            path: path.into(),
-            input: PhantomData,
-            output: PhantomData,
-        }
-    }
-
-    pub fn delete<P: Into<String>>(path: P) -> Self {
-        Self::new(HttpMethod::DELETE, path)
-    }
-
-    pub fn get<P: Into<String>>(path: P) -> Self {
-        Self::new(HttpMethod::GET, path)
-    }
-
-    pub fn post<P: Into<String>>(path: P) -> Self {
-        Self::new(HttpMethod::POST, path)
-    }
-
-    pub fn put<P: Into<String>>(path: P) -> Self {
-        Self::new(HttpMethod::PUT, path)
+        request.send().await?.body_json().await
     }
 }

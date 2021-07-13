@@ -1,12 +1,16 @@
 use std::{future::Future, marker::PhantomData};
 
-use actix_web::{
+use crate::actix_web::{
     dev::Handler as ActixHandler,
     web::{Data, Json, Query},
     *,
 };
 use ajars_core::{HttpMethod, Rest};
 use serde::{de::DeserializeOwned, Serialize};
+
+pub mod actix_web {
+    pub use actix_web::*;
+}
 
 pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static> {
     fn handle<H, D, R, E>(&self, handler: H) -> Resource

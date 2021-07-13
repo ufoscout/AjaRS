@@ -16,9 +16,3 @@ keywords = []
 actix-web = { version = "4.0.0-beta.8", default-features = false }
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
 serde = "1"
-
-[dev-dependencies]
-actix-rt = "2"
-port_check = "0.1"
-rand = "0.8"
-tokio = { version = "1", features = ["full"]}
