@@ -11,7 +11,7 @@ pub enum HttpMethod {
 }
 
 pub trait Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
-    fn new<P: Into<String>>(method: HttpMethod, path: P) -> RestImpl<I, O> {
+    fn build<P: Into<String>>(method: HttpMethod, path: P) -> RestImpl<I, O> {
         RestImpl::new(method, path)
     }
 
