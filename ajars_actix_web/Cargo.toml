@@ -1,0 +1,24 @@
+[package]
+name = "ajars_actix_web"
+version = "0.2.0"
+edition = "2018"
+license = "MIT"
+authors = ["Francesco Cina <ufoscout@gmail.com>"]
+description = "AjaRS"
+readme = "README.md"
+homepage = "https://github.com/ufoscout/AjaRS"
+repository = "https://github.com/ufoscout/AjaRS"
+keywords = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = { version = "4.0.0-beta.8", default-features = false }
+ajars_core = { path = "../ajars_core", version = "0.2.0" }
+serde = "1"
+
+[dev-dependencies]
+actix-rt = "2"
+port_check = "0.1"
+rand = "0.8"
+tokio = { version = "1", features = ["full"]}
