@@ -21,8 +21,8 @@ pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + 
         E: ResponseError + 'static;
 }
 
-impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: Rest<I,O>> HandleActix<I, O>
-    for REST
+impl<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: Rest<I, O>>
+    HandleActix<I, O> for REST
 {
     fn handle<H, D, R, E>(&self, handler: H) -> Resource
     where
@@ -34,18 +34,10 @@ impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned
         let resource = web::resource::<&str>(self.path());
 
         match self.method() {
-            HttpMethod::DELETE => {
-                resource.route(web::delete().to(QueryHandlerWrapper::new(handler)))
-            }
-            HttpMethod::GET => {
-                resource.route(web::get().to(QueryHandlerWrapper::new(handler)))
-            }
-            HttpMethod::POST => {
-                resource.route(web::post().to(JsonHandlerWrapper::new(handler)))
-            }
-            HttpMethod::PUT => {
-                resource.route(web::put().to(JsonHandlerWrapper::new(handler)))
-            }
+            HttpMethod::DELETE => resource.route(web::delete().to(QueryHandlerWrapper::new(handler))),
+            HttpMethod::GET => resource.route(web::get().to(QueryHandlerWrapper::new(handler))),
+            HttpMethod::POST => resource.route(web::post().to(JsonHandlerWrapper::new(handler))),
+            HttpMethod::PUT => resource.route(web::put().to(JsonHandlerWrapper::new(handler))),
         }
     }
 }
@@ -122,8 +114,7 @@ where
     }
 }
 
-impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Json<I>), R>
-    for JsonHandlerWrapper<H, D, R, E, I, O>
+impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Json<I>), R> for JsonHandlerWrapper<H, D, R, E, I, O>
 where
     H: Handler<D, R, E, I, O> + Clone + 'static,
     D: 'static,
@@ -186,8 +177,7 @@ where
     }
 }
 
-impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Query<I>), R>
-    for QueryHandlerWrapper<H, D, R, E, I, O>
+impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Query<I>), R> for QueryHandlerWrapper<H, D, R, E, I, O>
 where
     H: Handler<D, R, E, I, O> + Clone + 'static,
     D: 'static,

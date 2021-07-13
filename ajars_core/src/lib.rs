@@ -11,7 +11,6 @@ pub enum HttpMethod {
 }
 
 pub trait Rest<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
-
     fn new<P: Into<String>>(method: HttpMethod, path: P) -> RestImpl<I, O> {
         RestImpl::new(method, path)
     }
@@ -27,22 +26,13 @@ pub struct RestConst<I, O> {
     output: PhantomData<O>,
 }
 
-impl<I, O> Clone
-    for RestConst<I, O>
-{
+impl<I, O> Clone for RestConst<I, O> {
     fn clone(&self) -> Self {
-        Self {
-            path: self.path,
-            method: self.method.clone(),
-            input: PhantomData,
-            output: PhantomData,
-        }
+        Self { path: self.path, method: self.method.clone(), input: PhantomData, output: PhantomData }
     }
 }
 
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
-    for RestConst<I, O>
-{
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> for RestConst<I, O> {
     fn path(&self) -> &str {
         self.path
     }
@@ -54,12 +44,7 @@ impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
 
 impl<I, O> RestConst<I, O> {
     pub const fn new(method: HttpMethod, path: &'static str) -> Self {
-        Self {
-            method,
-            path,
-            input: PhantomData,
-            output: PhantomData,
-        }
+        Self { method, path, input: PhantomData, output: PhantomData }
     }
 
     pub fn delete(path: &'static str) -> Self {
@@ -79,7 +64,6 @@ impl<I, O> RestConst<I, O> {
     }
 }
 
-
 pub struct RestImpl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> {
     path: String,
     method: HttpMethod,
@@ -87,22 +71,13 @@ pub struct RestImpl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeO
     output: PhantomData<O>,
 }
 
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone
-    for RestImpl<I, O>
-{
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Clone for RestImpl<I, O> {
     fn clone(&self) -> Self {
-        Self {
-            path: self.path.clone(),
-            method: self.method.clone(),
-            input: PhantomData,
-            output: PhantomData,
-        }
+        Self { path: self.path.clone(), method: self.method.clone(), input: PhantomData, output: PhantomData }
     }
 }
 
-impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
-    for RestImpl<I, O>
-{
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I, O> for RestImpl<I, O> {
     fn path(&self) -> &str {
         &self.path
     }
@@ -114,12 +89,7 @@ impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> Rest<I,O>
 
 impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned> RestImpl<I, O> {
     pub fn new<P: Into<String>>(method: HttpMethod, path: P) -> Self {
-        Self {
-            method,
-            path: path.into(),
-            input: PhantomData,
-            output: PhantomData,
-        }
+        Self { method, path: path.into(), input: PhantomData, output: PhantomData }
     }
 
     pub fn delete<P: Into<String>>(path: P) -> Self {

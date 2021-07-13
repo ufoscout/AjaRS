@@ -2,7 +2,7 @@
 
 use actix_rt::spawn;
 use actix_rt::time::sleep;
-use ajars::{RestImpl, actix_web::HandleActix};
+use ajars::{actix_web::HandleActix, RestImpl};
 use ajars_actix_web::actix_web::web::{Data, Json};
 use ajars_actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use serde::{Deserialize, Serialize};
@@ -25,11 +25,7 @@ impl Display for MyError {
 
 impl ResponseError for MyError {}
 
-async fn echo(
-    request: HttpRequest,
-    _data: Data<()>,
-    body: Simple<String>,
-) -> Result<Json<Simple<String>>, MyError> {
+async fn echo(request: HttpRequest, _data: Data<()>, body: Simple<String>) -> Result<Json<Simple<String>>, MyError> {
     println!("echo - Request path: {:?}", request.path());
     println!("echo - Request method: {:?}", request.method());
     println!("echo - Request query_string: {:?}", request.query_string());
@@ -41,7 +37,10 @@ async fn echo(
 mod actix_web_reqwest_it {
 
     use super::*;
-    use ajars::{Rest, RestConst, reqwest::{reqwest::ClientBuilder, AjarsReqwest}};
+    use ajars::{
+        reqwest::{reqwest::ClientBuilder, AjarsReqwest},
+        Rest, RestConst,
+    };
 
     #[actix_rt::test]
     async fn test_reqwest_rest() {
@@ -50,8 +49,7 @@ mod actix_web_reqwest_it {
             rand::random::<usize>()
         )))
         .await;
-        perform_reqwest_call(&RestConst::<Simple<String>, Simple<String>>::get("/api/const"))
-        .await;
+        perform_reqwest_call(&RestConst::<Simple<String>, Simple<String>>::get("/api/const")).await;
         perform_reqwest_call(&RestImpl::<Simple<String>, Simple<String>>::post(format!(
             "/api/{}",
             rand::random::<usize>()
@@ -75,30 +73,21 @@ mod actix_web_reqwest_it {
 
         spawn(async move {
             println!("Start actix-web to {}", address_clone);
-            HttpServer::new(move || {
-                App::new()
-                    .app_data(Data::new(()))
-                    .service(rest_clone.handle(echo))
-            })
-            .bind(&address_clone)
-            .and_then(|ser| Ok(ser))
-            .unwrap()
-            .run()
-            .await
-            .unwrap();
+            HttpServer::new(move || App::new().app_data(Data::new(())).service(rest_clone.handle(echo)))
+                .bind(&address_clone)
+                .and_then(|ser| Ok(ser))
+                .unwrap()
+                .run()
+                .await
+                .unwrap();
         });
 
         sleep(Duration::from_millis(200)).await;
 
         // Start client
-        let ajars = AjarsReqwest::new(
-            ClientBuilder::new().build().unwrap(),
-            format!("http://{}", address),
-        );
+        let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), format!("http://{}", address));
 
-        let req_data = Simple {
-            inner: format!("{}", rand::random::<usize>()),
-        };
+        let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 
         // Act
         let response = ajars.request(rest).send(&req_data).await;
@@ -149,30 +138,21 @@ mod actix_web_surf_it {
 
         spawn(async move {
             println!("Start actix-web to {}", address_clone);
-            HttpServer::new(move || {
-                App::new()
-                    .app_data(Data::new(()))
-                    .service(rest_clone.handle(echo))
-            })
-            .bind(&address_clone)
-            .and_then(|ser| Ok(ser))
-            .unwrap()
-            .run()
-            .await
-            .unwrap();
+            HttpServer::new(move || App::new().app_data(Data::new(())).service(rest_clone.handle(echo)))
+                .bind(&address_clone)
+                .and_then(|ser| Ok(ser))
+                .unwrap()
+                .run()
+                .await
+                .unwrap();
         });
 
         sleep(Duration::from_millis(200)).await;
 
         // Start client
-        let req = RestSurf::new(
-            surf::client(),
-            format!("http://{}", address),
-        );
+        let req = RestSurf::new(surf::client(), format!("http://{}", address));
 
-        let req_data = Simple {
-            inner: format!("{}", rand::random::<usize>()),
-        };
+        let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 
         // Act
         let response = req.submit(rest, &req_data).await;
