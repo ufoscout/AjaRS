@@ -1,5 +1,5 @@
 [package]
-name = "ajars_surf"
+name = "ajars_websys"
 version = "0.2.0"
 edition = "2018"
 license = "MIT"
@@ -14,5 +14,5 @@ keywords = []
 
 [dependencies]
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
-serde = {version = "1", default-features = false }
-surf = { version = "2.2", default-features = false }
+serde = { version = "1", default-features = false }
+
