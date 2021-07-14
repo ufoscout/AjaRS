@@ -1,3 +1,7 @@
+use std::marker::PhantomData;
+
+use ajars_core::HttpMethod;
+use ajars_core::Rest;
 use bytes::Bytes;
 
 use http::response::Builder;
@@ -8,6 +12,8 @@ use http::StatusCode;
 use js_sys::ArrayBuffer;
 use js_sys::DataView;
 
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
@@ -54,7 +60,7 @@ fn into_web_request(request: Request<Option<String>>) -> Result<WebRequest, Erro
 
   let request = WebRequest::new_with_str_and_init(&uri.to_string(), &opts).map_err(|err| {
     Error::web(
-      format!("failed to create GET request for {}", uri.to_string()),
+      format!("failed to create request for {}", uri.to_string()),
       err,
     )
   })?;
@@ -68,9 +74,6 @@ async fn into_http_response(response: WebResponse) -> Result<Response<Bytes>, Er
   let status = response.status();
   let status = StatusCode::from_u16(status)?;
 
-  // TODO: It is conceivable that using a `ReadableStream` through the
-  //       `body` method may be a better way, but it appears that the
-  //       stream API is not yet available.
   let buffer = response
     .array_buffer()
     .map_err(|err| Error::web("failed to read HTTP body as ArrayBuffer", err))?;
@@ -101,7 +104,7 @@ async fn do_request(
   let request = into_web_request(request)?;
   let response = JsFuture::from(client.fetch_with_request(&request))
     .await
-    .map_err(|err| Error::web("failed to issue GET request", err))?;
+    .map_err(|err| Error::web("failed to issue request", err))?;
   let response = response
     .dyn_into::<WebResponse>()
     .map_err(|err| Error::web("future did not resolve into a web-sys Response", err))?;
@@ -109,6 +112,42 @@ async fn do_request(
   into_http_response(response).await
 }
 
+#[derive(Clone)]
+pub struct AjarsWebSys {
+    window: Window,
+    base_url: String,
+}
+
+impl AjarsWebSys {
+    pub fn new(base_url: String) -> Result<Self, Error> {
+        let window = window().ok_or_else(|| Error::MissingWindow)?;
+        Ok(Self { window, base_url })
+    }
+    
+    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
+        &self,
+        rest: &'a REST,
+    ) -> RequestBuilder<'a, I, O, REST> {
+        let url = format!("{}{}", &self.base_url, rest.path());
+
+        let request_builder = Request::builder();
+        RequestBuilder { rest, url, request_builder, phantom_i: PhantomData, phantom_o: PhantomData }
+    }
+}
+
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>> {
+    rest: &'a REST,
+    url: String,
+    request_builder: http::request::Builder,
+    phantom_i: PhantomData<I>,
+    phantom_o: PhantomData<O>,
+}
+
+impl <'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>> 
+    RequestBuilder<'a, I, O, REST> {
+
+
+}
 
 /// An HTTP client for usage in WASM environments.
 #[derive(Debug)]

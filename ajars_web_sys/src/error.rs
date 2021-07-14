@@ -4,6 +4,8 @@ use wasm_bindgen::JsValue;
 
 #[derive(Debug, ThisError)]
 pub enum Error {
+    #[error("Cannot find Window object")]
+    MissingWindow,
   #[error("an HTTP error occurred")]
   Http(
     #[from]
