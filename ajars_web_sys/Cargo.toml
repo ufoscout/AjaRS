@@ -1,0 +1,39 @@
+[package]
+name = "ajars_web_sys"
+version = "0.2.0"
+edition = "2018"
+license = "MIT"
+authors = ["Francesco Cina <ufoscout@gmail.com>"]
+description = "AjaRS"
+readme = "../README.md"
+homepage = "https://github.com/ufoscout/AjaRS"
+repository = "https://github.com/ufoscout/AjaRS"
+keywords = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ajars_core = { path = "../ajars_core", version = "0.2.0" }
+bytes = "1.0"
+http = "0.2"
+serde = { version = "1", default-features = false }
+thiserror = "1"
+
+js-sys = {version = "0.3", default-features = false}
+wasm-bindgen = {version = "0.2", default-features = false, features = ["std"]}
+wasm-bindgen-futures = {version = "0.4", default-features = false}
+
+[dependencies.web-sys]
+version = "0.3"
+default-features = false
+features = [
+  'Headers',
+  'Request',
+  'RequestInit',
+  'RequestMode',
+  'Response',
+  'Window',
+]
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"
