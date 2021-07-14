@@ -23,7 +23,7 @@ actix-rt = "2"
 port_check = "0.1"
 rand = "0.8"
 serde = "1"
-surf_lib = { package = "surf", version = "=2.1" }
+surf_lib = { package = "surf", version = "2.2" }
 
 [features]
 actix_web = ["ajars_actix_web"]
