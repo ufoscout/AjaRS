@@ -2,7 +2,7 @@ use std::{convert::TryFrom, marker::PhantomData, time::Duration};
 
 use crate::reqwest::{Client, RequestBuilder as ReqwestRequestBuilder};
 use ::reqwest::header::{HeaderName, HeaderValue};
-use ajars_core::{HttpMethod, Rest};
+use ajars_core::{HttpMethod, RestType};
 use http::HeaderMap;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -21,7 +21,7 @@ impl AjarsReqwest {
         Self { client, base_url }
     }
 
-    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
+    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &self,
         rest: &'a REST,
     ) -> RequestBuilder<'a, I, O, REST> {
@@ -38,14 +38,14 @@ impl AjarsReqwest {
     }
 }
 
-pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>> {
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
     rest: &'a REST,
     request: ReqwestRequestBuilder,
     phantom_i: PhantomData<I>,
     phantom_o: PhantomData<O>,
 }
 
-impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>
+impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
     RequestBuilder<'a, I, O, REST>
 {
     /// Sends the Request to the target URL, returning a

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use ajars_core::HttpMethod;
-use ajars_core::Rest;
+use ajars_core::RestType;
 use bytes::Bytes;
 
 use http::response::Builder;
@@ -124,7 +124,7 @@ impl AjarsWebSys {
         Ok(Self { window, base_url })
     }
     
-    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
+    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &self,
         rest: &'a REST,
     ) -> RequestBuilder<'a, I, O, REST> {
@@ -135,7 +135,7 @@ impl AjarsWebSys {
     }
 }
 
-pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>> {
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
     rest: &'a REST,
     url: String,
     request_builder: http::request::Builder,
@@ -143,7 +143,7 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
     phantom_o: PhantomData<O>,
 }
 
-impl <'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>> 
+impl <'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> 
     RequestBuilder<'a, I, O, REST> {
 
 

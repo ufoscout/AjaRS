@@ -5,7 +5,7 @@ use crate::actix_web::{
     web::{Data, Json, Query},
     *,
 };
-use ajars_core::{HttpMethod, Rest};
+use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod actix_web {
@@ -21,7 +21,7 @@ pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + 
         E: ResponseError + 'static;
 }
 
-impl<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: Rest<I, O>>
+impl<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: RestType<I, O>>
     HandleActix<I, O> for REST
 {
     fn handle<H, D, R, E>(&self, handler: H) -> Resource

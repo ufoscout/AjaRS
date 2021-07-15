@@ -7,4 +7,7 @@ members = [
     "ajars_surf",
     "ajars_web_sys",
     "ajars",
+    "examples/ajars_common",
+    "examples/client_reqwest",
+    "examples/server_actix_web",
 ] 

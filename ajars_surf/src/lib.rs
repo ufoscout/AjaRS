@@ -1,4 +1,4 @@
-use ajars_core::{HttpMethod, Rest};
+use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 use crate::surf::Client;
 
@@ -17,7 +17,7 @@ impl RestSurf {
         Self { client, base_url }
     }
 
-    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: Rest<I, O>>(
+    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &self,
         rest: &REST,
         data: &I,
