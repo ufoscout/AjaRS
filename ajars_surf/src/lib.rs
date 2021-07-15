@@ -1,4 +1,6 @@
-use crate::surf::Client;
+use std::marker::PhantomData;
+
+use crate::surf::{Client, RequestBuilder as SurfRequestBuilder};
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -7,34 +9,57 @@ pub mod surf {
 }
 
 #[derive(Clone)]
-pub struct RestSurf {
+pub struct AjarsSurf {
     client: Client,
     base_url: String,
 }
 
-impl RestSurf {
+impl AjarsSurf {
     pub fn new(client: Client, base_url: String) -> Self {
         Self { client, base_url }
     }
 
-    pub async fn submit<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
+    pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &self,
-        rest: &REST,
-        data: &I,
-    ) -> Result<O, surf::Error> {
+        rest: &'a REST,
+    ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", self.base_url, rest.path());
 
         let request = match rest.method() {
-            HttpMethod::DELETE => self.client.delete(&url).query(data)?,
-            HttpMethod::GET => self.client.get(&url).query(data)?,
+            HttpMethod::DELETE => self.client.delete(&url),
+            HttpMethod::GET => self.client.get(&url),
             HttpMethod::POST => {
-                self.client.post(&url).header("Content-Type", "application/json").body(surf::Body::from_json(data)?)
+                self.client.post(&url).header("Content-Type", "application/json")
             }
             HttpMethod::PUT => {
-                self.client.put(&url).header("Content-Type", "application/json").body(surf::Body::from_json(data)?)
+                self.client.put(&url).header("Content-Type", "application/json")
             }
+        };
+
+        RequestBuilder { rest, request, phantom_i: PhantomData, phantom_o: PhantomData }
+
+    }
+}
+
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
+    rest: &'a REST,
+    request: SurfRequestBuilder,
+    phantom_i: PhantomData<I>,
+    phantom_o: PhantomData<O>,
+}
+
+impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
+    RequestBuilder<'a, I, O, REST>
+{
+    /// Sends the Request to the target URL, returning a
+    /// future Response.
+    pub async fn send(self, data: &I) -> Result<O, surf::Error> {
+        let request = match self.rest.method() {
+            HttpMethod::DELETE | HttpMethod::GET => self.request.query(data)?,
+            HttpMethod::POST | HttpMethod::PUT => self.request.header("Content-Type", "application/json").body(surf::Body::from_json(data)?),
         };
 
         request.send().await?.body_json().await
     }
+
 }

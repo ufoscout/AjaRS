@@ -1,5 +1,5 @@
 [package]
-name = "reqwest_client"
+name = "client_reqwest"
 version = "0.1.0"
 edition = "2018"
 

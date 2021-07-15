@@ -103,7 +103,7 @@ mod actix_web_reqwest_it {
 mod actix_web_surf_it {
 
     use super::*;
-    use ajars::surf::RestSurf;
+    use ajars::surf::AjarsSurf;
 
     #[actix_rt::test]
     async fn test_surf_rest() {
@@ -152,12 +152,12 @@ mod actix_web_surf_it {
         sleep(Duration::from_millis(200)).await;
 
         // Start client
-        let req = RestSurf::new(ajars::surf::surf::client(), format!("http://{}", address));
+        let req = AjarsSurf::new(ajars::surf::surf::client(), format!("http://{}", address));
 
         let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 
         // Act
-        let response = req.submit(rest, &req_data).await;
+        let response = req.request(rest).send(&req_data).await;
 
         // Assert
         assert_eq!(req_data, response.unwrap());

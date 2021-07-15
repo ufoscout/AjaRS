@@ -1,4 +1,4 @@
-use ajars::reqwest::{reqwest::ClientBuilder, AjarsReqwest};
+use ajars::surf::{surf, AjarsSurf};
 use ajars_common::{
     hello::{HelloRequest, HELLO},
     ping::{PingRequest, PING},
@@ -6,7 +6,7 @@ use ajars_common::{
 
 #[tokio::main]
 async fn main() {
-    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080".to_owned());
+    let ajars = AjarsSurf::new(surf::client(), "http://127.0.0.1:8080".to_owned());
 
     // PING
     {
