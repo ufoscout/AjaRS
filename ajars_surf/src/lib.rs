@@ -1,6 +1,6 @@
+use crate::surf::Client;
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
-use crate::surf::Client;
 
 pub mod surf {
     pub use surf::*;
@@ -27,14 +27,12 @@ impl RestSurf {
         let request = match rest.method() {
             HttpMethod::DELETE => self.client.delete(&url).query(data)?,
             HttpMethod::GET => self.client.get(&url).query(data)?,
-            HttpMethod::POST => self.client
-                .post(&url)
-                .header("Content-Type", "application/json")
-                .body(surf::Body::from_json(data)?),
-            HttpMethod::PUT => self.client
-                .put(&url)
-                .header("Content-Type", "application/json")
-                .body(surf::Body::from_json(data)?),
+            HttpMethod::POST => {
+                self.client.post(&url).header("Content-Type", "application/json").body(surf::Body::from_json(data)?)
+            }
+            HttpMethod::PUT => {
+                self.client.put(&url).header("Content-Type", "application/json").body(surf::Body::from_json(data)?)
+            }
         };
 
         request.send().await?.body_json().await

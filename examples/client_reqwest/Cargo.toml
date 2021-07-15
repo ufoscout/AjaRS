@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 ajars = { path = "../../ajars", features = ["reqwest"] }
 ajars_common = { path = "../ajars_common" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

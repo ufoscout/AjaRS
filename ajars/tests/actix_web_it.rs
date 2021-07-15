@@ -39,7 +39,7 @@ mod actix_web_reqwest_it {
     use super::*;
     use ajars::{
         reqwest::{reqwest::ClientBuilder, AjarsReqwest},
-        RestType, Rest,
+        Rest, RestType,
     };
 
     #[actix_rt::test]
@@ -62,7 +62,9 @@ mod actix_web_reqwest_it {
         .await;
     }
 
-    async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(rest: &REST) {
+    async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(
+        rest: &REST,
+    ) {
         // Arrange
         let free_port = port_check::free_local_port().unwrap();
         let address = format!("127.0.0.1:{}", free_port);
