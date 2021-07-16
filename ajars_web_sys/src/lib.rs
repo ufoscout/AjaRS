@@ -6,7 +6,6 @@ use ajars_core::RestType;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use wasm_bindgen::JsCast as _;
-use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
 use web_sys::window;
@@ -107,11 +106,11 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
             }
             HttpMethod::POST => {
                 opts.method("POST");
-                opts.body(Some(&JsValue::from_str(&serde_json::to_string(data).unwrap())));
+                opts.body(Some(&serde_wasm_bindgen::to_value(&data).unwrap()));
             },
             HttpMethod::PUT => {
                 opts.method("PUT");
-                opts.body(Some(&JsValue::from_str(&serde_json::to_string(data).unwrap())));
+                opts.body(Some(&serde_wasm_bindgen::to_value(&data).unwrap()));
             },
         };
 

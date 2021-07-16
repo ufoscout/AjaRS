@@ -16,7 +16,6 @@ keywords = []
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
 serde = { version = "1", default-features = false }
 serde-wasm-bindgen = "0.3"
-serde_json = "1"
 serde_urlencoded = "0.7"
 thiserror = "1"
 
