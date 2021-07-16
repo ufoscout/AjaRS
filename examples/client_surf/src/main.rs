@@ -14,7 +14,9 @@ async fn main() {
         // The PingRequest and PingResponse types are enforced at compile time
         let response = ajars
             .request(&PING)
-            .send(&PingRequest {})
+            .send(&PingRequest {
+                message: "Surf".to_owned()
+            })
             .await
             .expect("Should perform a GET call. Is the server running?");
 

@@ -44,7 +44,9 @@ impl Component for Model {
                     // The PingRequest and PingResponse types are enforced at compile time
                     let response = ajars
                     .request(&PING)
-                    .send(&PingRequest {})
+                    .send(&PingRequest {
+                        message: "Call From web_sys in Yew".to_owned()
+                    })
                     .await;
 
                     Msg::PingSetResponse(response)

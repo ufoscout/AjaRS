@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 pub const PING: Rest<PingRequest, PingResponse> = Rest::get("/api/ping");
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
+pub struct PingRequest {
+    pub message: String,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PingResponse {
