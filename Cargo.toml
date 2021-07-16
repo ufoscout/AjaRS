@@ -12,4 +12,5 @@ members = [
     "examples/client_surf",
     "examples/server_actix_web",
     "examples/web_yew_reqwest",
+    "examples/web_yew_surf",
 ] 

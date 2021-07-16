@@ -1,6 +1,6 @@
 # web_yew_reqwest
 
-A simple [Yew](https://yew.rs) based WASM application that uses `ajars_reqwest` to call the backend.
+A simple [Yew](https://yew.rs) based WASM application that uses `ajars_surf` to call the backend.
 
 ## Requirements
 

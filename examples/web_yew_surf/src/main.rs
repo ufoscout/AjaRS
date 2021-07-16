@@ -1,4 +1,4 @@
-use ajars::reqwest::{AjarsReqwest, reqwest::{ClientBuilder, Error as ReqwestError}};
+use ajars::surf::{AjarsSurf, surf::{Client, Error as SurfError}};
 use ajars_common::ping::{PING, PingRequest, PingResponse};
 use std::rc::Rc;
 use yew::{prelude::*, services::ConsoleService};
@@ -6,12 +6,12 @@ use yewtil::future::LinkFuture;
 
 enum Msg {
     PingSend,
-    PingSetResponse(Result<PingResponse, ReqwestError>)
+    PingSetResponse(Result<PingResponse, SurfError>)
 }
 
 struct Model {
     link: ComponentLink<Self>,
-    ajars: Rc<AjarsReqwest>,
+    ajars: Rc<AjarsSurf>,
     ping_response: String,
 }
 
@@ -23,8 +23,8 @@ impl Component for Model {
 
         // This should be created at application level and shared across all components and services
         let ajars = {
-            let client = ClientBuilder::new().build().expect("Should build a Reqwest client");
-            Rc::new(AjarsReqwest::new(client, "http://127.0.0.1:3000"))
+            let client = Client::new();
+            Rc::new(AjarsSurf::new(client, "http://127.0.0.1:3000"))
         };
 
         Self {
