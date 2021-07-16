@@ -24,6 +24,7 @@ impl Component for Model {
         // This should be created at application level and shared across all components and services
         let ajars = {
             let client = ClientBuilder::new().build().expect("Should build a Reqwest client");
+            // I am forced to use an absolute URL due to issue: https://github.com/seanmonstar/reqwest/issues/1306
             Rc::new(AjarsReqwest::new(client, "http://127.0.0.1:3000"))
         };
 

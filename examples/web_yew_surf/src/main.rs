@@ -24,6 +24,7 @@ impl Component for Model {
         // This should be created at application level and shared across all components and services
         let ajars = {
             let client = Client::new();
+            // I am forced to use an absolute URL due to issue: https://github.com/http-rs/surf/issues/314
             Rc::new(AjarsSurf::new(client, "http://127.0.0.1:3000"))
         };
 
