@@ -2,15 +2,10 @@ use std::marker::PhantomData;
 
 use ajars_core::HttpMethod;
 use ajars_core::RestType;
-use bytes::Bytes;
 
 use http::response::Builder;
-use http::Request;
 use http::Response;
 use http::StatusCode;
-
-use js_sys::ArrayBuffer;
-use js_sys::DataView;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -30,66 +25,42 @@ use error::Error;
 
 pub mod error;
 
-/// Convert an `http::Request` into one as used by the Fetch API.
-fn into_web_request(request: Request<Option<String>>) -> Result<WebRequest, Error> {
-    let (parts, body) = request.into_parts();
-    let headers = Headers::new().map_err(|err| Error::web("failed to create Headers object", err))?;
-    let headers = parts.headers.iter().try_fold::<_, _, Result<_, Error>>(headers, |headers, (k, v)| {
-        let _ = headers.append(k.as_str(), v.to_str()?);
-        Ok(headers)
-    })?;
-
-    let value;
-    let body = if let Some(body) = body {
-        value = JsValue::from_str(&body);
-        Some(&value)
-    } else {
-        None
-    };
-    let uri = parts.uri;
-
-    let mut opts = RequestInit::new();
-    opts.mode(RequestMode::Cors);
-    opts.method(parts.method.as_str());
-    opts.headers(&headers);
-    opts.body(body);
-
-    let request = WebRequest::new_with_str_and_init(&uri.to_string(), &opts)
-        .map_err(|err| Error::web(format!("failed to create request for {}", uri.to_string()), err))?;
-
-    Ok(request)
-}
 
 /// Create a `http::Response` from one produced by the Fetch API.
 async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<Response<O>, Error> {
     let status = response.status();
     let status = StatusCode::from_u16(status)?;
 
-    let buffer = response.array_buffer().map_err(|err| Error::web("failed to read HTTP body as ArrayBuffer", err))?;
-    let buffer =
+    /*
+    {
+
+        let buffer = response.array_buffer().map_err(|err| Error::web("failed to read HTTP body as ArrayBuffer", err))?;
+        let buffer =
         JsFuture::from(buffer).await.map_err(|err| Error::web("failed to retrieve HTTP body from response", err))?;
-    let buffer = buffer
+        let buffer = buffer
         .dyn_into::<ArrayBuffer>()
         .map_err(|err| Error::web("future did not resolve into an js-sys ArrayBuffer", err))?;
-    let length = buffer.byte_length() as usize;
+        let length = buffer.byte_length() as usize;
+        
+        let data_view = DataView::new(&buffer, 0, length);
+        let body = (0..length).fold(Vec::with_capacity(length), |mut body, i| {
+            body.push(data_view.get_uint8(i));
+            body
+        });
+        
+        let data: O = serde_json::from_slice(&body).expect("Should build from JSON with serde");
+    }
+    */
 
-    let data_view = DataView::new(&buffer, 0, length);
-    let body = (0..length).fold(Vec::with_capacity(length), |mut body, i| {
-        body.push(data_view.get_uint8(i));
-        body
-    });
-    let bytes = Bytes::from(body);
+    let value = JsFuture::from(response.json()
+    .map_err(|err| Error::web("Failed to read JSON body", err))?).await
+    .map_err(|err| Error::web("Failed to read JSON body", err))?;
 
-
-    let data: O = serde_json::from_slice(&bytes).expect("Should build from JSON with serde");
+    let data: O = serde_wasm_bindgen::from_value(value).expect("Should build from JSON with serde_wasm_bindgen");
 
     // TODO: We should also set headers and various other fields.
     let response = Builder::new().status(status).body(data)?;
     Ok(response)
-}
-
-async fn do_request<O: Serialize + DeserializeOwned>(client: &Window, request: Request<Option<String>>) -> Result<Response<O>, Error> {
-    do_web_request(client, into_web_request(request)?).await
 }
 
 async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<Response<O>, Error> {
