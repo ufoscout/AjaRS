@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, marker::PhantomData, time::Duration};
+use std::{convert::TryFrom, marker::PhantomData};
 
 use crate::reqwest::{Client, RequestBuilder as ReqwestRequestBuilder};
 use ::reqwest::header::{HeaderName, HeaderValue};
@@ -17,8 +17,8 @@ pub struct AjarsReqwest {
 }
 
 impl AjarsReqwest {
-    pub fn new(client: Client, base_url: String) -> Self {
-        Self { client, base_url }
+    pub fn new<S: Into<String>>(client: Client, base_url: S) -> Self {
+        Self { client, base_url: base_url.into() }
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
@@ -79,6 +79,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         self
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     /// Enable HTTP basic authentication.
     pub fn basic_auth<U, P>(mut self, username: U, password: Option<P>) -> Self
     where
@@ -98,12 +99,13 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         self
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     /// Enables a request timeout.
     ///
     /// The timeout is applied from when the request starts connecting until the
     /// response body has finished. It affects only this request and overrides
     /// the timeout configured using `ClientBuilder::timeout()`.
-    pub fn timeout(mut self, timeout: Duration) -> Self {
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
         self.request = self.request.timeout(timeout);
         self
     }

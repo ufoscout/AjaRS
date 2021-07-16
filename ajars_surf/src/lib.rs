@@ -15,8 +15,8 @@ pub struct AjarsSurf {
 }
 
 impl AjarsSurf {
-    pub fn new(client: Client, base_url: String) -> Self {
-        Self { client, base_url }
+    pub fn new<S: Into<String>>(client: Client, base_url: S) -> Self {
+        Self { client, base_url: base_url.into() }
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(

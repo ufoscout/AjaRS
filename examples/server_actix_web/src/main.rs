@@ -27,13 +27,17 @@ async fn hello(request: HttpRequest, _data: Data<()>, body: HelloRequest) -> Res
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
+    let port = 8080;
+    println!("Starting actix server at port {}", port);
+
     HttpServer::new(|| {
         App::new()
             .app_data(Data::new(()))
             .service(PING.handle(ping)) // This creates a GET /api/ping endpoint
             .service(HELLO.handle(hello)) // This creates a POST /api/hello endpoint
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }
