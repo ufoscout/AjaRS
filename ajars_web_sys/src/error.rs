@@ -5,24 +5,6 @@ use wasm_bindgen::JsValue;
 pub enum Error {
     #[error("Cannot find Window object")]
     MissingWindow,
-    #[error("an HTTP error occurred")]
-    Http(
-        #[from]
-        #[source]
-        http::Error,
-    ),
-    #[error("encountered request header with opaque bytes")]
-    HttpHeader(
-        #[from]
-        #[source]
-        http::header::ToStrError,
-    ),
-    #[error("an invalid HTTP status was received")]
-    InvalidStatusCode(
-        #[from]
-        #[source]
-        http::status::InvalidStatusCode,
-    ),
     #[error("{context}")]
     WebSys {
         /// Some crate-provided context to the error.

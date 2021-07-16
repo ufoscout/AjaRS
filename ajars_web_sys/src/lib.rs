@@ -3,10 +3,6 @@ use std::marker::PhantomData;
 use ajars_core::HttpMethod;
 use ajars_core::RestType;
 
-use http::response::Builder;
-use http::Response;
-use http::StatusCode;
-
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use wasm_bindgen::JsCast as _;
@@ -27,30 +23,9 @@ pub mod error;
 
 
 /// Create a `http::Response` from one produced by the Fetch API.
-async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<Response<O>, Error> {
-    let status = response.status();
-    let status = StatusCode::from_u16(status)?;
+async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<O, Error> {
 
-    /*
-    {
-
-        let buffer = response.array_buffer().map_err(|err| Error::web("failed to read HTTP body as ArrayBuffer", err))?;
-        let buffer =
-        JsFuture::from(buffer).await.map_err(|err| Error::web("failed to retrieve HTTP body from response", err))?;
-        let buffer = buffer
-        .dyn_into::<ArrayBuffer>()
-        .map_err(|err| Error::web("future did not resolve into an js-sys ArrayBuffer", err))?;
-        let length = buffer.byte_length() as usize;
-        
-        let data_view = DataView::new(&buffer, 0, length);
-        let body = (0..length).fold(Vec::with_capacity(length), |mut body, i| {
-            body.push(data_view.get_uint8(i));
-            body
-        });
-        
-        let data: O = serde_json::from_slice(&body).expect("Should build from JSON with serde");
-    }
-    */
+    // let status = response.status();
 
     let value = JsFuture::from(response.json()
     .map_err(|err| Error::web("Failed to read JSON body", err))?).await
@@ -58,12 +33,10 @@ async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebRespon
 
     let data: O = serde_wasm_bindgen::from_value(value).expect("Should build from JSON with serde_wasm_bindgen");
 
-    // TODO: We should also set headers and various other fields.
-    let response = Builder::new().status(status).body(data)?;
-    Ok(response)
+    Ok(data)
 }
 
-async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<Response<O>, Error> {
+async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<O, Error> {
     let response = JsFuture::from(client.fetch_with_request(&request))
         .await
         .map_err(|err| Error::web("failed to issue request", err))?;
@@ -145,8 +118,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         let request = WebRequest::new_with_str_and_init(&uri, &opts)
         .map_err(|err| Error::web(format!("failed to create request for {}", uri.to_string()), err)).expect("WebRequest::new_with_str_and_init problem");
 
-        let response = do_web_request(&self.window, request).await?;
-        Ok(response.into_body())
+        do_web_request(&self.window, request).await
         
     }
 
