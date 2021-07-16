@@ -61,7 +61,7 @@ fn into_web_request(request: Request<Option<String>>) -> Result<WebRequest, Erro
 }
 
 /// Create a `http::Response` from one produced by the Fetch API.
-async fn into_http_response(response: WebResponse) -> Result<Response<Bytes>, Error> {
+async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<Response<O>, Error> {
     let status = response.status();
     let status = StatusCode::from_u16(status)?;
 
@@ -80,13 +80,19 @@ async fn into_http_response(response: WebResponse) -> Result<Response<Bytes>, Er
     });
     let bytes = Bytes::from(body);
 
+
+    let data: O = serde_json::from_slice(&bytes).expect("Should build from JSON with serde");
+
     // TODO: We should also set headers and various other fields.
-    let response = Builder::new().status(status).body(bytes)?;
+    let response = Builder::new().status(status).body(data)?;
     Ok(response)
 }
 
-async fn do_request(client: &Window, request: Request<Option<String>>) -> Result<Response<Bytes>, Error> {
-    let request = into_web_request(request)?;
+async fn do_request<O: Serialize + DeserializeOwned>(client: &Window, request: Request<Option<String>>) -> Result<Response<O>, Error> {
+    do_web_request(client, into_web_request(request)?).await
+}
+
+async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<Response<O>, Error> {
     let response = JsFuture::from(client.fetch_with_request(&request))
         .await
         .map_err(|err| Error::web("failed to issue request", err))?;
@@ -104,26 +110,25 @@ pub struct AjarsWebSys {
 }
 
 impl AjarsWebSys {
-    pub fn new(base_url: String) -> Result<Self, Error> {
+    pub fn new<P: Into<String>>(base_url: P) -> Result<Self, Error> {
         let window = window().ok_or_else(|| Error::MissingWindow)?;
-        Ok(Self { window, base_url })
+        Ok(Self { window, base_url: base_url.into() })
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
-        &self,
+        &'a self,
         rest: &'a REST,
     ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        let request_builder = Request::builder();
-        RequestBuilder { rest, url, request_builder, phantom_i: PhantomData, phantom_o: PhantomData }
+        RequestBuilder { rest, window: &self.window, url, phantom_i: PhantomData, phantom_o: PhantomData }
     }
 }
 
 pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
     rest: &'a REST,
+    window: &'a Window,
     url: String,
-    request_builder: http::request::Builder,
     phantom_i: PhantomData<I>,
     phantom_o: PhantomData<O>,
 }
@@ -131,41 +136,47 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
 impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
     RequestBuilder<'a, I, O, REST>
 {
-}
+    
+    /// Sends the Request to the target URL, returning a
+    /// future Response.
+    pub async fn send(self, data: &I) -> Result<O, Error> {
 
-/// An HTTP client for usage in WASM environments.
-#[derive(Debug)]
-pub struct Client(Window);
+        let headers = Headers::new().map_err(|err| Error::web("failed to create Headers object", err)).unwrap();
+        headers.append("Content-Type", "application/json").expect("Should be able to add a header");
 
-impl Client {
-    /// Create a new WASM HTTP client.
-    pub fn new() -> Self {
-        let window = window().expect("no window found; not running inside a browser?");
-        Self(window)
+        let mut opts = RequestInit::new();
+        opts.mode(RequestMode::Cors);
+        opts.headers(&headers);
+        
+        let mut uri = self.url;
+
+        match self.rest.method() {
+            HttpMethod::DELETE => {
+                opts.method("DELETE");
+                uri.push_str("?");
+                uri.push_str(&serde_urlencoded::to_string(data).unwrap());
+            }
+            HttpMethod::GET => {
+                opts.method("GET");
+                uri.push_str("?");
+                uri.push_str(&serde_urlencoded::to_string(data).unwrap());
+            }
+            HttpMethod::POST => {
+                opts.method("POST");
+                opts.body(Some(&JsValue::from_str(&serde_json::to_string(data).unwrap())));
+            },
+            HttpMethod::PUT => {
+                opts.method("PUT");
+                opts.body(Some(&JsValue::from_str(&serde_json::to_string(data).unwrap())));
+            },
+        };
+
+        let request = WebRequest::new_with_str_and_init(&uri, &opts)
+        .map_err(|err| Error::web(format!("failed to create request for {}", uri.to_string()), err)).expect("WebRequest::new_with_str_and_init problem");
+
+        let response = do_web_request(&self.window, request).await?;
+        Ok(response.into_body())
+        
     }
 
-    /// Issue a request and retrieve a response.
-    pub async fn request(&self, request: Request<Option<String>>) -> Result<Response<Bytes>, Error> {
-        do_request(&self.0, request).await
-    }
-}
-
-impl Default for Client {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl From<Window> for Client {
-    /// Create a `Client` from a `Window`.
-    fn from(window: Window) -> Self {
-        Self(window)
-    }
-}
-
-impl Into<Window> for Client {
-    /// Extract the `Window` from a `Client`.
-    fn into(self) -> Window {
-        self.0
-    }
 }

@@ -17,6 +17,7 @@ ajars_actix_web = { path = "../ajars_actix_web", version = "0.2.0", optional = t
 ajars_core = { path = "../ajars_core", version = "0.2.0" }
 ajars_reqwest = { path = "../ajars_reqwest", version = "0.2.0", optional = true }
 ajars_surf = { path = "../ajars_surf", version = "0.2.0", optional = true }
+ajars_web_sys = { path = "../ajars_web_sys", version = "0.2.0", optional = true }
 
 [dev-dependencies]
 actix-rt = "2"
@@ -29,3 +30,4 @@ surf_lib = { package = "surf", version = "2.2" }
 actix_web = ["ajars_actix_web"]
 reqwest = ["ajars_reqwest"]
 surf = ["ajars_surf"]
+web_sys = ["ajars_web_sys"]

@@ -13,4 +13,9 @@ pub mod surf {
     pub use ajars_surf::*;
 }
 
+#[cfg(feature = "web_sys")]
+pub mod web_sys {
+    pub use ajars_web_sys::*;
+}
+
 pub use ajars_core::*;
