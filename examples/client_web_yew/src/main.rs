@@ -1,4 +1,4 @@
-use ajars::web::{AjarsWebSys, error::Error};
+use ajars::web::{AjarsWeb, error::Error};
 use ajars_common::ping::{PING, PingRequest, PingResponse};
 use std::rc::Rc;
 use yew::{prelude::*, services::ConsoleService};
@@ -11,7 +11,7 @@ enum Msg {
 
 struct Model {
     link: ComponentLink<Self>,
-    ajars: Rc<AjarsWebSys>,
+    ajars: Rc<AjarsWeb>,
     ping_response: String,
 }
 
@@ -23,7 +23,7 @@ impl Component for Model {
 
         // This should be created at application level and shared across all components and services
         let ajars = {
-            Rc::new(AjarsWebSys::new("http://127.0.0.1:3000").expect("Should build Ajars"))
+            Rc::new(AjarsWeb::new("http://127.0.0.1:3000").expect("Should build Ajars"))
         };
 
         Self {

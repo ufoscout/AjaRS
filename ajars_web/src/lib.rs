@@ -75,38 +75,70 @@ impl HttpStatus {
     }
 }
 
+/// Allows to modify and inspect a Request/Response
+pub trait Interceptor {
+
+    /// Returns a DoNothingInterceptor
+    fn empty() -> DoNothingInterceptor {
+        DoNothingInterceptor{}
+    }
+
+    /// Called before a request is performed
+    fn before_request(&self, uri: String, opts: RequestInit) -> Result<(String, RequestInit), Error> {
+        Ok((uri, opts))
+    }
+
+    /// Called after a response is received and before the body is consumed
+    fn after_response(&self, response: Result<WebResponse, Error>) -> Result<WebResponse, Error> {
+        response
+    }
+
+}
+
+/// An Interceptor implementation that does not alter the request/response
+pub struct DoNothingInterceptor{}
+
+impl Interceptor for DoNothingInterceptor{}
+    
 #[derive(Clone)]
-pub struct AjarsWebSys {
+pub struct AjarsWeb<M: Interceptor> {
     window: Window,
+    interceptor: M,
     base_url: String,
 }
 
-impl AjarsWebSys {
-    pub fn new<P: Into<String>>(base_url: P) -> Result<Self, Error> {
+impl <M: Interceptor> AjarsWeb<M> {
+
+    pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsWeb<DoNothingInterceptor>, Error> {
+        AjarsWeb::new_with_interceptor(base_url, DoNothingInterceptor{})
+    }
+
+    pub fn new_with_interceptor<P: Into<String>>(base_url: P, interceptor: M) -> Result<AjarsWeb<M>, Error> {
         let window = window().ok_or_else(|| Error::MissingWindow)?;
-        Ok(Self { window, base_url: base_url.into() })
+        Ok(AjarsWeb { window, interceptor, base_url: base_url.into() })
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &'a self,
         rest: &'a REST,
-    ) -> RequestBuilder<'a, I, O, REST> {
+    ) -> RequestBuilder<'a, I, O, REST, M> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder { rest, window: &self.window, url, phantom_i: PhantomData, phantom_o: PhantomData }
+        RequestBuilder { rest, window: &self.window, interceptor: &self.interceptor, url, phantom_i: PhantomData, phantom_o: PhantomData }
     }
 }
 
-pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>, M: Interceptor> {
     rest: &'a REST,
+    interceptor: &'a M,
     window: &'a Window,
     url: String,
     phantom_i: PhantomData<I>,
     phantom_o: PhantomData<O>,
 }
 
-impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
-    RequestBuilder<'a, I, O, REST>
+impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>, M: Interceptor>
+    RequestBuilder<'a, I, O, REST, M>
 {
     
     /// Sends the Request to the target URL, returning a
@@ -145,13 +177,19 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
             },
         };
 
+        let (uri, opts) = self.interceptor.before_request(uri, opts)?;
+        
         let request = WebRequest::new_with_str_and_init(&uri, &opts)
         .map_err(|err| Error::Builder{
             context: format!("Failed to create request for {}", uri.to_string()),
             source: WebError(format!("{:?}", err))
         })?;
 
-        do_web_request(&self.window, request).await
+        let response = do_web_request(&self.window, request).await;
+
+        let response = self.interceptor.after_response(response)?;
+        
+        into_http_response(response).await
         
     }
 
@@ -178,7 +216,7 @@ fn as_body<I: Serialize + DeserializeOwned>(opts: &mut RequestInit, method: &str
     Ok(())
 }
 
-async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<O, Error> {
+async fn do_web_request(client: &Window, request: WebRequest) -> Result<WebResponse, Error> {
 
     let response = JsFuture::from(client.fetch_with_request(&request))
         .await
@@ -187,15 +225,13 @@ async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, reques
             source: err.into(),
         })?;
 
-    let response = response
+    response
         .dyn_into::<WebResponse>()
         .map_err(|err| Error::Builder{
             context: "Future did not resolve into a web-sys Response".to_owned(),
             source: err.into(),
-        })?;
+        })
 
-
-    into_http_response(response).await
 }
 
 async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<O, Error> {
