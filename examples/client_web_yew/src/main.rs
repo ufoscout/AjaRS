@@ -1,4 +1,4 @@
-use ajars::web_sys::{AjarsWebSys, error::Error};
+use ajars::web::{AjarsWebSys, error::Error};
 use ajars_common::ping::{PING, PingRequest, PingResponse};
 use std::rc::Rc;
 use yew::{prelude::*, services::ConsoleService};

@@ -8,7 +8,7 @@ declare -a publish_list=(
     "ajars_actix_web"
     "ajars_reqwest"
     "ajars_surf"
-    "ajars_web_sys"
+    "ajars_web"
     "ajars"
 )
 

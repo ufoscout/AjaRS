@@ -1,5 +1,5 @@
 [package]
-name = "ajars_web_sys"
+name = "ajars_web"
 version = "0.3.0"
 edition = "2018"
 license = "MIT"
