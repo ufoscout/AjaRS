@@ -27,7 +27,6 @@ async fn hello(request: HttpRequest, _data: Data<()>, body: HelloRequest) -> Res
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
     let port = 8080;
     println!("Starting actix server at port {}", port);
 

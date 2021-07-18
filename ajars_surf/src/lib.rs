@@ -28,16 +28,11 @@ impl AjarsSurf {
         let request = match rest.method() {
             HttpMethod::DELETE => self.client.delete(&url),
             HttpMethod::GET => self.client.get(&url),
-            HttpMethod::POST => {
-                self.client.post(&url).header("Content-Type", "application/json")
-            }
-            HttpMethod::PUT => {
-                self.client.put(&url).header("Content-Type", "application/json")
-            }
+            HttpMethod::POST => self.client.post(&url).header("Content-Type", "application/json"),
+            HttpMethod::PUT => self.client.put(&url).header("Content-Type", "application/json"),
         };
 
         RequestBuilder { rest, request, phantom_i: PhantomData, phantom_o: PhantomData }
-
     }
 }
 
@@ -56,10 +51,11 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     pub async fn send(self, data: &I) -> Result<O, surf::Error> {
         let request = match self.rest.method() {
             HttpMethod::DELETE | HttpMethod::GET => self.request.query(data)?,
-            HttpMethod::POST | HttpMethod::PUT => self.request.header("Content-Type", "application/json").body(surf::Body::from_json(data)?),
+            HttpMethod::POST | HttpMethod::PUT => {
+                self.request.header("Content-Type", "application/json").body(surf::Body::from_json(data)?)
+            }
         };
 
         request.send().await?.body_json().await
     }
-
 }
