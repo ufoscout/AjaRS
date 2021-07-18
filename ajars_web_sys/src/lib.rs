@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::marker::PhantomData;
 
 use ajars_core::HttpMethod;
@@ -18,32 +19,60 @@ use web_sys::Window;
 
 use error::Error;
 
+use crate::error::WebError;
+
 pub mod error;
 
+#[derive(Debug, Clone, Copy)]
+pub struct HttpStatus(u16);
 
-/// Create a `http::Response` from one produced by the Fetch API.
-async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<O, Error> {
-
-    // let status = response.status();
-
-    let value = JsFuture::from(response.json()
-    .map_err(|err| Error::web("Failed to read JSON body", err))?).await
-    .map_err(|err| Error::web("Failed to read JSON body", err))?;
-
-    let data: O = serde_wasm_bindgen::from_value(value).expect("Should build from JSON with serde_wasm_bindgen");
-
-    Ok(data)
+impl Display for HttpStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
-async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<O, Error> {
-    let response = JsFuture::from(client.fetch_with_request(&request))
-        .await
-        .map_err(|err| Error::web("failed to issue request", err))?;
-    let response = response
-        .dyn_into::<WebResponse>()
-        .map_err(|err| Error::web("future did not resolve into a web-sys Response", err))?;
+impl From<u16> for HttpStatus {
+    fn from(status: u16) -> Self {
+        Self(status)
+    }
+}
 
-    into_http_response(response).await
+impl HttpStatus {
+
+    #[inline]
+    pub fn status(&self) -> u16 {
+        self.0
+    }
+
+    #[inline]
+    pub fn is_informational(&self) -> bool {
+        200 > self.0 && self.0 >= 100
+    }
+
+    /// Check if status is within 200-299.
+    #[inline]
+    pub fn is_success(&self) -> bool {
+        300 > self.0 && self.0 >= 200
+    }
+
+    /// Check if status is within 300-399.
+    #[inline]
+    pub fn is_redirection(&self) -> bool {
+        400 > self.0 && self.0 >= 300
+    }
+
+    /// Check if status is within 400-499.
+    #[inline]
+    pub fn is_client_error(&self) -> bool {
+        500 > self.0 && self.0 >= 400
+    }
+
+    /// Check if status is within 500-599.
+    #[inline]
+    pub fn is_server_error(&self) -> bool {
+        600 > self.0 && self.0 >= 500
+    }
 }
 
 #[derive(Clone)]
@@ -84,8 +113,16 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     /// future Response.
     pub async fn send(self, data: &I) -> Result<O, Error> {
 
-        let headers = Headers::new().map_err(|err| Error::web("failed to create Headers object", err)).unwrap();
-        headers.append("Content-Type", "application/json").expect("Should be able to add a header");
+        let headers = Headers::new()
+        .map_err(|err| Error::Builder{
+            context: "Failed to create Headers object".to_owned(),
+            source: WebError(format!("{:?}", err))
+        })?;
+
+        headers.append("Content-Type", "application/json").map_err(|err| Error::Builder{
+            context: "Failed to append Context-Type header".to_owned(),
+            source: WebError(format!("{:?}", err))
+        })?;
 
         let mut opts = RequestInit::new();
         opts.mode(RequestMode::Cors);
@@ -95,30 +132,95 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
 
         match self.rest.method() {
             HttpMethod::DELETE => {
-                opts.method("DELETE");
-                uri.push_str("?");
-                uri.push_str(&serde_urlencoded::to_string(data).unwrap());
+                as_query_string(&mut opts, &mut uri, "DELETE", data)?;
             }
             HttpMethod::GET => {
-                opts.method("GET");
-                uri.push_str("?");
-                uri.push_str(&serde_urlencoded::to_string(data).unwrap());
+                as_query_string(&mut opts, &mut uri, "GET", data)?;
             }
             HttpMethod::POST => {
-                opts.method("POST");
-                opts.body(Some(&serde_wasm_bindgen::to_value(&data).unwrap()));
+                as_body(&mut opts, "POST", data)?;
             },
             HttpMethod::PUT => {
-                opts.method("PUT");
-                opts.body(Some(&serde_wasm_bindgen::to_value(&data).unwrap()));
+                as_body(&mut opts, "PUT", data)?;
             },
         };
 
         let request = WebRequest::new_with_str_and_init(&uri, &opts)
-        .map_err(|err| Error::web(format!("failed to create request for {}", uri.to_string()), err)).expect("WebRequest::new_with_str_and_init problem");
+        .map_err(|err| Error::Builder{
+            context: format!("Failed to create request for {}", uri.to_string()),
+            source: WebError(format!("{:?}", err))
+        })?;
 
         do_web_request(&self.window, request).await
         
+    }
+
+}
+
+fn as_query_string<I: Serialize + DeserializeOwned>(opts: &mut RequestInit, uri: &mut String, method: &str, data: &I) -> Result<(), Error>{
+    opts.method(method);
+    uri.push_str("?");
+    uri.push_str(&serde_urlencoded::to_string(data)
+    .map_err(|err| Error::Builder{
+        context: "Failed to serialize data as query string".to_owned(),
+        source: WebError(format!("{:?}", err))
+    })?);
+    Ok(())
+}
+
+fn as_body<I: Serialize + DeserializeOwned>(opts: &mut RequestInit, method: &str, data: &I) -> Result<(), Error>{
+    opts.method(method);
+    opts.body(Some(&serde_wasm_bindgen::to_value(&data)
+    .map_err(|err| Error::Builder {
+        context: "Failed to serialize data as JSON body".to_owned(),
+        source: WebError(format!("{:?}", err))
+    })?));
+    Ok(())
+}
+
+async fn do_web_request<O: Serialize + DeserializeOwned>(client: &Window, request: WebRequest) -> Result<O, Error> {
+
+    let response = JsFuture::from(client.fetch_with_request(&request))
+        .await
+        .map_err(|err| Error::Builder{
+            context: "Failed to issue request".to_owned(),
+            source: err.into(),
+        })?;
+
+    let response = response
+        .dyn_into::<WebResponse>()
+        .map_err(|err| Error::Builder{
+            context: "Future did not resolve into a web-sys Response".to_owned(),
+            source: err.into(),
+        })?;
+
+
+    into_http_response(response).await
+}
+
+async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<O, Error> {
+
+    let status = HttpStatus::from(response.status());
+
+    // This 'if' check is how it is performed by Reqwest
+    if status.is_client_error() || status.is_server_error() {
+        Err(Error::Response {
+            status,
+            context: format!("Error HTTP status code received: {}", status.status()),
+            source: WebError(format!("{:?}", response))
+        },)
+    } else {
+        let value = JsFuture::from(response.json()
+        .map_err(|err| Error::response(status, "Failed to read JSON body", err))?).await
+        .map_err(|err| Error::response(status,"Failed to read JSON body", err))?;
+    
+        let data: O = serde_wasm_bindgen::from_value(value)
+        .map_err(|err| Error::Builder {
+            context: "Failed to deserialize data as JSON body from Response".to_owned(),
+            source: WebError(format!("{:?}", err))
+        })?;
+    
+        Ok(data)
     }
 
 }

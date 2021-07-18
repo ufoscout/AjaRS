@@ -1,18 +1,26 @@
 use thiserror::Error as ThisError;
 use wasm_bindgen::JsValue;
 
+use crate::HttpStatus;
+
 #[derive(Debug, ThisError)]
 pub enum Error {
     #[error("Cannot find Window object")]
     MissingWindow,
-    #[error("{context}")]
-    WebSys {
+    #[error("Builder error. Context: {context}")]
+    Builder {
         /// Some crate-provided context to the error.
         context: String,
         /// The originally reported `JsValue` in some textual form.
-        // We do not keep the `JsValue` around because they are a pain to
-        // work with (just extracting something useful) and they cause
-        // everything they touch to be not `Send`.
+        #[source]
+        source: WebError,
+    },
+    #[error("Response error. HTTP status: {status}. Context: {context}")]
+    Response {
+        status: HttpStatus,
+        /// Some crate-provided context to the error.
+        context: String,
+        /// The originally reported `JsValue` in some textual form.
         #[source]
         source: WebError,
     },
@@ -20,16 +28,21 @@ pub enum Error {
 
 #[derive(Debug, ThisError)]
 #[error("{0}")]
-pub struct WebError(String);
+pub struct WebError(pub String);
+
+impl From<JsValue> for WebError {
+    fn from(value: JsValue) -> Self {
+        let error = if let Some(error) = value.as_string() { error } else { format!("{:?}", value) };
+        WebError(error)
+    }
+}
 
 impl Error {
     /// Create a new `Error::WebSys` variant.
-    pub(crate) fn web<S>(context: S, error: JsValue) -> Error
+    pub(crate) fn response<S>(status: HttpStatus, context: S, error: JsValue) -> Error
     where
         S: Into<String>,
     {
-        let error = if let Some(error) = error.as_string() { error } else { format!("{:?}", error) };
-
-        Self::WebSys { context: context.into(), source: WebError(error) }
+        Self::Response { status, context: context.into(), source: error.into() }
     }
 }
