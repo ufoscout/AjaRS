@@ -78,11 +78,6 @@ impl HttpStatus {
 /// Allows to modify and inspect a Request/Response
 pub trait Interceptor {
 
-    /// Returns a DoNothingInterceptor
-    fn empty() -> DoNothingInterceptor {
-        DoNothingInterceptor{}
-    }
-
     /// Called before a request is performed
     fn before_request(&self, uri: String, opts: RequestInit) -> Result<(String, RequestInit), Error> {
         Ok((uri, opts))
@@ -100,20 +95,19 @@ pub struct DoNothingInterceptor{}
 
 impl Interceptor for DoNothingInterceptor{}
     
-#[derive(Clone)]
-pub struct AjarsWeb<M: Interceptor> {
+pub struct AjarsWeb {
     window: Window,
-    interceptor: M,
+    interceptor: Box<dyn Interceptor>,
     base_url: String,
 }
 
-impl <M: Interceptor> AjarsWeb<M> {
+impl AjarsWeb {
 
-    pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsWeb<DoNothingInterceptor>, Error> {
-        AjarsWeb::new_with_interceptor(base_url, DoNothingInterceptor{})
+    pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsWeb, Error> {
+        AjarsWeb::new_with_interceptor(base_url, Box::new(DoNothingInterceptor{}))
     }
 
-    pub fn new_with_interceptor<P: Into<String>>(base_url: P, interceptor: M) -> Result<AjarsWeb<M>, Error> {
+    pub fn new_with_interceptor<P: Into<String>>(base_url: P, interceptor: Box<dyn Interceptor>) -> Result<AjarsWeb, Error> {
         let window = window().ok_or_else(|| Error::MissingWindow)?;
         Ok(AjarsWeb { window, interceptor, base_url: base_url.into() })
     }
@@ -121,24 +115,24 @@ impl <M: Interceptor> AjarsWeb<M> {
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
         &'a self,
         rest: &'a REST,
-    ) -> RequestBuilder<'a, I, O, REST, M> {
+    ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder { rest, window: &self.window, interceptor: &self.interceptor, url, phantom_i: PhantomData, phantom_o: PhantomData }
+        RequestBuilder { rest, window: &self.window, interceptor: self.interceptor.as_ref(), url, phantom_i: PhantomData, phantom_o: PhantomData }
     }
 }
 
-pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>, M: Interceptor> {
+pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
     rest: &'a REST,
-    interceptor: &'a M,
+    interceptor: &'a dyn Interceptor,
     window: &'a Window,
     url: String,
     phantom_i: PhantomData<I>,
     phantom_o: PhantomData<O>,
 }
 
-impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>, M: Interceptor>
-    RequestBuilder<'a, I, O, REST, M>
+impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
+    RequestBuilder<'a, I, O, REST>
 {
     
     /// Sends the Request to the target URL, returning a
@@ -188,7 +182,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         let response = do_web_request(&self.window, request).await;
 
         let response = self.interceptor.after_response(response)?;
-        
+
         into_http_response(response).await
         
     }
