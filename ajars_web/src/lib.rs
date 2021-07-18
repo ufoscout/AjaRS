@@ -1,5 +1,6 @@
 use std::fmt::Display;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 use ajars_core::HttpMethod;
 use ajars_core::RestType;
@@ -94,18 +95,18 @@ impl Interceptor for DoNothingInterceptor {}
 
 pub struct AjarsWeb {
     window: Window,
-    interceptor: Box<dyn Interceptor>,
+    interceptor: Rc<dyn Interceptor>,
     base_url: String,
 }
 
 impl AjarsWeb {
     pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsWeb, Error> {
-        AjarsWeb::new_with_interceptor(base_url, Box::new(DoNothingInterceptor {}))
+        AjarsWeb::new_with_interceptor(base_url, Rc::new(DoNothingInterceptor {}))
     }
 
     pub fn new_with_interceptor<P: Into<String>>(
         base_url: P,
-        interceptor: Box<dyn Interceptor>,
+        interceptor: Rc<dyn Interceptor>,
     ) -> Result<AjarsWeb, Error> {
         let window = window().ok_or_else(|| Error::MissingWindow)?;
         Ok(AjarsWeb { window, interceptor, base_url: base_url.into() })
