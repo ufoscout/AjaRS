@@ -4,7 +4,7 @@ A small [Rust](https://www.rust-lang.org) library to resolve the duplicated code
 
 ## The problem
 When we create a REST endpoint, we need to provide at least four different values:
-1. The path to the resource
+1. The path of the resource
 1. The HTTP Method
 1. The Json type consumed
 1. The Json type produced
@@ -47,19 +47,19 @@ let url = "http://127.0.0.1:8080/ping";   // DUPLICATED '/ping' path definition
 
 let response = client.post(&url)   // DUPLICATED HTTP Post method definition
 
-.json(PingRequest { message: "PING".to_owned() }) // Duplicated request type not checked at compile time
+.json(PingRequest { message: "PING".to_owned() }) // Duplicated request type. Not checked at compile time
 
-.send().await?.json::<PingResponse>().await    // Duplicated response type not checked at compile time
+.send().await?.json::<PingResponse>().await    // Duplicated response type. Not checked at compile time
 ```
 
-Wouldn't it be good to have those values declared only once and checked at compile time?
+Wouldn't it be good to have those values declared only once with all types checked at compile time?
 
 ## The AjaRs solution
 
-Ajars allows a single point definition for those values. This removes code duplication and
-allows compile time verification that the endpoint server and client definitions are coherent.
+Ajars allows a single definition for those values. This removes code duplication and
+allows compile time verification that the endpoint server and client path, method, request type and response type are coherent.
 
-For example, the following is the Ajars definition of the previous endpoint, this should be declared in a commond library imported by both the server and the client:
+For example, the following is the Ajars definition of the previous endpoint, ideally declared in a commond library imported by both the server and the client:
 ```rust
 use ajars::Rest;
 
@@ -67,8 +67,10 @@ use ajars::Rest;
 pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 ```
 
-Now, using Ajars, the server side endpoint definition becomes:
+Now, using Ajars, the server side endpoint creation with actix-web becomes:
 ```rust
+use ajars::actix_web::HandleActix;
+
 HttpServer::new(move || 
         App::new().service(
             PING.handle(ping)
@@ -99,9 +101,9 @@ let response = ajars
 
 ### WASM in the browser
 Ajars provides a lightweight client implementation based on [web-sys](TODO), 
-this is to be used in WASM based web frontends the run in a browser.
+this is to be used in WASM based web frontends that run in a browser (e.g. [Yew](TODO), [Sycamore](TODO), etc...).
 
-To use it enable the the `web` feature, in the Cargo.toml file:
+To use it enable the `web` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["web"] }
 ```
@@ -121,7 +123,7 @@ let response = ajars
 ```
 
 ### Reqwest
-To use it enable the the `reqwest` feature, in the Cargo.toml file:
+To use it enable the `reqwest` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["reqwest"] }
 ```
@@ -141,7 +143,7 @@ let response = ajars
 ```
 
 ### Surf
-To use it enable the the `surf` feature, in the Cargo.toml file:
+To use it enable the `surf` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["surf"] }
 ```
@@ -163,7 +165,7 @@ let response = ajars
 ## Supported servers
 
 ### Actix-web
-To use it enable the the `actix_web` feature, in the Cargo.toml file:
+To use it enable the `actix_web` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["actix_web"] }
 ```
