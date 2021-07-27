@@ -5,6 +5,7 @@ members = [
     "ajars_actix_web",
     "ajars_reqwest",
     "ajars_surf",
+    "ajars_warp",
     "ajars_web",
     "ajars",
     "examples/ajars_common",
