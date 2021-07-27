@@ -190,3 +190,164 @@ where
         self.handler.call((param.0, param.1, param.2.into_inner()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::fmt::Display;
+
+    use super::*;
+    use crate::actix_web::test;
+    use ajars_core::RestFluent;
+    use serde::{Deserialize, Serialize};
+    
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {
+        pub message: String,
+    }
+    
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {
+        pub message: String,
+    }
+
+    async fn ping(_request: HttpRequest, _data: Data<()>, body: PingRequest) -> Result<Json<PingResponse>, ServerError> {
+        Ok(Json(PingResponse { message: body.message }))
+    }
+
+    #[derive(Debug, Clone)]
+    struct ServerError {}
+
+    impl Display for ServerError {
+        fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Ok(())
+        }
+    }
+
+    impl ResponseError for ServerError {}
+
+    #[actix_rt::test]
+    async fn should_create_a_delete_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let mut app = test::init_service(
+            App::new()
+                .app_data(Data::new(()))
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::delete()
+        .uri(&format!("{}?message={}", rest.path(), payload.message))
+        .to_request();
+
+        // Act
+        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+
+        // Assert
+        assert_eq!(resp.message, payload.message);
+    }
+
+    #[actix_rt::test]
+    async fn should_create_a_get_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let mut app = test::init_service(
+            App::new()
+                .app_data(Data::new(()))
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::get()
+        .uri(&format!("{}?message={}", rest.path(), payload.message))
+        .to_request();
+
+        // Act
+        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+
+        // Assert
+        assert_eq!(resp.message, payload.message);
+    }
+
+    #[actix_rt::test]
+    async fn should_create_a_post_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let mut app = test::init_service(
+            App::new()
+                .app_data(Data::new(()))
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::post().uri(rest.path()).set_json(&payload).to_request();
+
+        // Act
+        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+
+        // Assert
+        assert_eq!(resp.message, payload.message);
+    }
+
+    #[actix_rt::test]
+    async fn should_create_a_put_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let mut app = test::init_service(
+            App::new()
+                .app_data(Data::new(()))
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::put().uri(rest.path()).set_json(&payload).to_request();
+
+        // Act
+        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+
+        // Assert
+        assert_eq!(resp.message, payload.message);
+    }
+
+}
