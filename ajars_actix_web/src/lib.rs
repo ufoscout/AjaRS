@@ -12,6 +12,8 @@ pub mod actix_web {
     pub use actix_web::*;
 }
 
+mod attempt;
+
 pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static> {
     fn handle<H, D, R, E>(&self, handler: H) -> Resource
     where
