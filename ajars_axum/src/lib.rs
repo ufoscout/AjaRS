@@ -1,8 +1,6 @@
 use std::future::Future;
-use ::axum::{
-    extract::{Extension, RequestParts}, prelude::*, response::IntoResponse, routing::BoxRoute,
-};
-use ajars_core::{HttpMethod, RestType};
+use ::axum::{extract::{Extension, FromRequest, RequestParts}, prelude::*, response::IntoResponse, routing::BoxRoute};
+use ajars_core::{HttpMethod, Rest, RestType};
 use http::Request;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -10,13 +8,111 @@ pub mod axum {
     pub use axum::*;
 }
 
-pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
+mod attempt;
 
-    /*
-fn route<T, F, B>(&self, route: Route<T, F>, description: &str, svc: T) -> BoxRoute<Body>
-where
-    T: Service<Request<B>> + Clone;
-    */
+pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T> {
+    fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body>;
+}
+
+
+impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, F, R, E> AxumHandler<I, O, ()> for F
+where 
+R: Future<Output = Result<O, E>> + Send,
+E: IntoResponse + Send + 'static,
+F: 'static + Clone + Send + Sync + Fn(I) -> R,
+{
+    fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body> {
+        let route = match rest.method() {
+            HttpMethod::DELETE => route(rest.path(), delete(
+                |payload: extract::Query<I>| async move {
+                (self)(payload.0).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::GET => route(rest.path(), get(
+                |payload: extract::Query<I>| async move {
+                (self)(payload.0).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::POST => route(rest.path(), post(
+                |payload: extract::Json<I>| async move {
+                (self)(payload.0).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::PUT => route(rest.path(), put(
+                |payload: extract::Json<I>| async move {
+                (self)(payload.0).await.map(|result| response::Json(result))
+            })).boxed(),
+        };
+
+        route
+    }
+}
+
+
+impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, F, R, E, P1> AxumHandler<I, O, (P1,)> for F
+where 
+R: Future<Output = Result<O, E>> + Send,
+E: IntoResponse + Send + 'static,
+F: 'static + Send + Sync + Clone + Fn(I, P1) -> R,
+P1: FromRequest<Body> + Send + 'static
+{
+    fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body> {
+        let route = match rest.method() {
+            HttpMethod::DELETE => route(rest.path(), delete(
+                |payload: extract::Query<I>, p1: P1| async move {
+                (self)(payload.0, p1).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::GET => route(rest.path(), get(
+                |payload: extract::Query<I>, p1: P1| async move {
+                (self)(payload.0, p1).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::POST => route(rest.path(), post(
+                |payload: extract::Json<I>, p1: P1| async move {
+                (self)(payload.0, p1).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::PUT => route(rest.path(), put(
+                |payload: extract::Json<I>, p1: P1| async move {
+                (self)(payload.0, p1).await.map(|result| response::Json(result))
+            })).boxed(),
+        };
+
+        route
+    }
+}
+
+impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, F, R, E, P1, P2> AxumHandler<I, O, (P1, P2)> for F
+where 
+R: Future<Output = Result<O, E>> + Send,
+E: IntoResponse + Send + 'static,
+F: 'static + Send + Sync + Clone + Fn(I, P1, P2) -> R,
+P1: FromRequest<Body> + Send + 'static,
+P2: FromRequest<Body> + Send + 'static,
+{
+    fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body> {
+        let route = match rest.method() {
+            HttpMethod::DELETE => route(rest.path(), delete(
+                |payload: extract::Query<I>, p1: P1, p2: P2| async move {
+                (self)(payload.0, p1, p2).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::GET => route(rest.path(), get(
+                |payload: extract::Query<I>, p1: P1, p2: P2| async move {
+                (self)(payload.0, p1, p2).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::POST => route(rest.path(), post(
+                |payload: extract::Json<I>, p1: P1, p2: P2| async move {
+                (self)(payload.0, p1, p2).await.map(|result| response::Json(result))
+            })).boxed(),
+            HttpMethod::PUT => route(rest.path(), put(
+                |payload: extract::Json<I>, p1: P1, p2: P2| async move {
+                (self)(payload.0, p1, p2).await.map(|result| response::Json(result))
+            })).boxed(),
+        };
+
+        route
+    }
+}
+
+
+
+
+pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
 
     fn route<D, E, F, R>(&self, handler: F) -> BoxRoute<Body>
 where
