@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use ::actix_web::{FromRequest, Resource, ResponseError, web::{self, Json}};
+use ::actix_web::{FromRequest, Resource, ResponseError, web::{self, Json, Query}};
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -14,70 +14,52 @@ pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + Deseri
     fn handle(&self, handler: H) -> Resource;
 }
 
-
-impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>> ActixWebHandler<I, O, (), H>
+macro_rules! factory_tuple ({ $($param:ident)* } => {
+    #[allow(non_snake_case)]
+    impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> ActixWebHandler<I, O, ($($param,)*), H>
     for REST 
 where 
-H: Clone + 'static + Fn(I) -> R,
+H: Clone + 'static + Fn(I, $($param,)*) -> R,
 R: Future<Output = Result<Json<O>, E>> + 'static,
 E: ResponseError + 'static,
+$( $param: FromRequest + 'static, )*
 {
     fn handle(&self, handler: H) -> Resource {
         let resource = web::resource::<&str>(self.path());
 
         match self.method() {
             HttpMethod::DELETE => resource.route(web::delete().to(
-                move |json: Json<I>| {
-                (handler)(json.into_inner())
+                move |json: Query<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*)
             })),
             HttpMethod::GET => resource.route(web::get().to(
-                move |json: Json<I>| {
-                (handler)(json.into_inner())
+                move |json: Query<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*)
             })),
             HttpMethod::POST => resource.route(web::post().to(
-                move |json: Json<I>| {
-                (handler)(json.into_inner())
+                move |json: Json<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*)
             })),
             HttpMethod::PUT => resource.route(web::put().to(
-                move |json: Json<I>| {
-                (handler)(json.into_inner())
+                move |json: Json<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*)
             })),
         }
     }
 }
+});
 
-
-impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, P0, REST: RestType<I, O>> ActixWebHandler<I, O, (P0,), H>
-    for REST 
-where 
-H: Clone + 'static + Fn(I, P0) -> R,
-R: Future<Output = Result<Json<O>, E>> + 'static,
-E: ResponseError + 'static,
-P0: FromRequest + 'static
-{
-    fn handle(&self, handler: H) -> Resource {
-        let resource = web::resource::<&str>(self.path());
-
-        match self.method() {
-            HttpMethod::DELETE => resource.route(web::delete().to(
-                move |json: Json<I>, p0: P0| {
-                (handler)(json.into_inner(), p0)
-            })),
-            HttpMethod::GET => resource.route(web::get().to(
-                move |json: Json<I>, p0: P0| {
-                (handler)(json.into_inner(), p0)
-            })),
-            HttpMethod::POST => resource.route(web::post().to(
-                move |json: Json<I>, p0: P0| {
-                (handler)(json.into_inner(), p0)
-            })),
-            HttpMethod::PUT => resource.route(web::put().to(
-                move |json: Json<I>, p0: P0| {
-                (handler)(json.into_inner(), p0)
-            })),
-        }
-    }
-}
+factory_tuple! {}
+factory_tuple! { P0 }
+factory_tuple! { P0 P1 }
+factory_tuple! { P0 P1 P2 }
+factory_tuple! { P0 P1 P2 P3 }
+factory_tuple! { P0 P1 P2 P3 P4 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
+//factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
 #[cfg(test)]
 mod tests {
@@ -86,7 +68,7 @@ mod tests {
 
     use super::*;
     use crate::actix_web::test;
-    use ::actix_web::{App, HttpRequest, web::Data};
+    use ::actix_web::{App, HttpRequest};
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
     
@@ -127,7 +109,6 @@ mod tests {
 
         let mut app = test::init_service(
             App::new()
-                .app_data(Data::new(()))
                 .service(rest.handle(ping)),
         )
         .await;
@@ -159,7 +140,6 @@ mod tests {
 
         let mut app = test::init_service(
             App::new()
-                .app_data(Data::new(()))
                 .service(rest.handle(ping)),
         )
         .await;
@@ -191,7 +171,6 @@ mod tests {
 
         let mut app = test::init_service(
             App::new()
-                .app_data(Data::new(()))
                 .service(rest.handle(ping)),
         )
         .await;
@@ -221,7 +200,6 @@ mod tests {
 
         let mut app = test::init_service(
             App::new()
-                .app_data(Data::new(()))
                 .service(rest.handle(ping)),
         )
         .await;

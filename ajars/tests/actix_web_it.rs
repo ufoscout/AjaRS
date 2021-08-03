@@ -2,7 +2,7 @@
 
 use actix_rt::spawn;
 use actix_rt::time::sleep;
-use ajars::{actix_web::HandleActix, RestFluent};
+use ajars::{actix_web::ActixWebHandler, RestFluent};
 use ajars_actix_web::actix_web::web::{Data, Json};
 use ajars_actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ impl Display for MyError {
 
 impl ResponseError for MyError {}
 
-async fn echo(request: HttpRequest, _data: Data<()>, body: Simple<String>) -> Result<Json<Simple<String>>, MyError> {
+async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Result<Json<Simple<String>>, MyError> {
     println!("echo - Request path: {:?}", request.path());
     println!("echo - Request method: {:?}", request.method());
     println!("echo - Request query_string: {:?}", request.query_string());
