@@ -1,14 +1,11 @@
 use std::future::Future;
-use ::axum::{extract::{Extension, FromRequest, RequestParts}, prelude::*, response::IntoResponse, routing::BoxRoute};
-use ajars_core::{HttpMethod, Rest, RestType};
-use http::Request;
+use ::axum::{extract::FromRequest, prelude::*, response::IntoResponse, routing::BoxRoute};
+use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod axum {
     pub use axum::*;
 }
-
-mod attempt;
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T> {
     fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body>;
@@ -109,10 +106,20 @@ P2: FromRequest<Body> + Send + 'static,
     }
 }
 
-
-
-
 pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
+    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> BoxRoute<Body>;
+}
+
+impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, REST: RestType<I, O>>
+AxumRoute<I, O> for REST {
+
+    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> BoxRoute<Body> {
+        handler.route(self)
+    }
+
+} 
+/*
+pub trait AxumRouteOLD<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
 
     fn route<D, E, F, R>(&self, handler: F) -> BoxRoute<Body>
 where
@@ -181,6 +188,8 @@ where
     }
 }
 
+*/
+
 #[cfg(test)]
 mod tests {
 
@@ -188,7 +197,7 @@ mod tests {
 
     use super::*;
     use ajars_core::RestFluent;
-    use ::axum::AddExtensionLayer;
+    use ::axum::{AddExtensionLayer, extract::Extension};
     use http::StatusCode;
     use serde::{Deserialize, Serialize};
     use tower::ServiceExt; // for `app.oneshot()`
@@ -204,8 +213,7 @@ mod tests {
     }
 
     async fn ping(
-        //_request: Request<Body>, 
-        _data: Extension<()>, body: PingRequest) -> Result<PingResponse, ServerError> {
+        body: PingRequest, _data: Extension<()>) -> Result<PingResponse, ServerError> {
         Ok(PingResponse { message: body.message })
     }
 
@@ -380,6 +388,31 @@ mod tests {
 
         // Assert
         assert_eq!(body.message, payload.message);
+    }
+
+    #[tokio::test]
+    async fn route_should_accept_variable_number_of_params() {
+
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+        // Accept 1 param
+        rest.route(|body: PingRequest| async {
+            Result::<_, ServerError>::Ok(PingResponse { message: body.message })
+        });
+
+        // Accept 2 param
+        rest.route(|body: PingRequest, _: Extension<()>| async {
+            Result::<_, ServerError>::Ok(PingResponse { message: body.message })
+        });
+        
+        // Accept 3 param
+        rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>| async {
+            Result::<_, ServerError>::Ok(PingResponse { message: body.message })
+        });
     }
 
 }
