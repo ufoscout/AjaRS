@@ -3,7 +3,7 @@
 use actix_rt::spawn;
 use actix_rt::time::sleep;
 use ajars::{actix_web::ActixWebHandler, RestFluent};
-use ajars_actix_web::actix_web::web::{Data, Json};
+use ajars_actix_web::actix_web::web::Data;
 use ajars_actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -25,12 +25,12 @@ impl Display for MyError {
 
 impl ResponseError for MyError {}
 
-async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Result<Json<Simple<String>>, MyError> {
+async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Result<Simple<String>, MyError> {
     println!("echo - Request path: {:?}", request.path());
     println!("echo - Request method: {:?}", request.method());
     println!("echo - Request query_string: {:?}", request.query_string());
     println!("echo - Request body: {:?}", body);
-    Ok(Json(body))
+    Ok(body)
 }
 
 #[cfg(feature = "reqwest")]

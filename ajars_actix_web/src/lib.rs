@@ -2,6 +2,7 @@ use std::future::Future;
 
 use ::actix_web::{FromRequest, Resource, ResponseError, web::{self, Json, Query}};
 use ajars_core::{HttpMethod, RestType};
+use futures_util::future::FutureExt;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod actix_web {
@@ -20,7 +21,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     for REST 
 where 
 H: Clone + 'static + Fn(I, $($param,)*) -> R,
-R: Future<Output = Result<Json<O>, E>> + 'static,
+R: Future<Output = Result<O, E>> + 'static,
 E: ResponseError + 'static,
 $( $param: FromRequest + 'static, )*
 {
@@ -30,19 +31,19 @@ $( $param: FromRequest + 'static, )*
         match self.method() {
             HttpMethod::DELETE => resource.route(web::delete().to(
                 move |json: Query<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*)
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
             })),
             HttpMethod::GET => resource.route(web::get().to(
                 move |json: Query<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*)
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
             })),
             HttpMethod::POST => resource.route(web::post().to(
                 move |json: Json<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*)
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
             })),
             HttpMethod::PUT => resource.route(web::put().to(
                 move |json: Json<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*)
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
             })),
         }
     }
@@ -82,8 +83,8 @@ mod tests {
         pub message: String,
     }
 
-    async fn ping(body: PingRequest, _request: HttpRequest ) -> Result<Json<PingResponse>, ServerError> {
-        Ok(Json(PingResponse { message: body.message }))
+    async fn ping(body: PingRequest, _request: HttpRequest ) -> Result<PingResponse, ServerError> {
+        Ok(PingResponse { message: body.message })
     }
 
     #[derive(Debug, Clone)]
