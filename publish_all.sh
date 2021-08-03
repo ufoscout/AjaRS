@@ -6,6 +6,7 @@ set -e
 declare -a publish_list=(
     "ajars_core"
     "ajars_actix_web"
+    "ajars_axum"
     "ajars_reqwest"
     "ajars_surf"
     "ajars_web"
