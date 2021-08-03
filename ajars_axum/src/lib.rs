@@ -118,77 +118,7 @@ AxumRoute<I, O> for REST {
     }
 
 } 
-/*
-pub trait AxumRouteOLD<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
 
-    fn route<D, E, F, R>(&self, handler: F) -> BoxRoute<Body>
-where
-    F: 'static + Clone + Send + Sync + Fn(
-        //Request<Body>, 
-        Extension<D>, I) -> R,
-    R: Future<Output = Result<O, E>> + Send,
-    D: Clone + Send + Sync + 'static,
-    E: IntoResponse + Send + 'static;
-}
-
-
-impl<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, REST: RestType<I, O>>
-AxumRoute<I, O> for REST
-{
-    fn route<D, E, F, R>(&self, handler: F) -> BoxRoute<Body>
-where
-    F: 'static + Clone + Send + Sync + Fn(
-        //Request<Body>, 
-        Extension<D>, I) -> R,
-    R: Future<Output = Result<O, E>> + Send,
-    D: Clone + Send + Sync + 'static,
-    E: IntoResponse + Send + 'static
-    {
-
-        let route = match self.method() {
-            HttpMethod::DELETE => route(self.path(), delete(|
-                //req: Request<Body>, 
-                data: Extension<D>, payload: extract::Query<I>| async move {
-                let result = (handler)(data, payload.0).await;
-                match result {
-                    Ok(result) => Ok(response::Json(result)),
-                    Err(e) => Err(e)
-                }
-            })).boxed(),
-            HttpMethod::GET => route(self.path(), get(|
-                //req: Request<Body>, 
-                data: Extension<D>, payload: extract::Query<I>| async move {
-                let result = (handler)(data, payload.0).await;
-                match result {
-                    Ok(result) => Ok(response::Json(result)),
-                    Err(e) => Err(e)
-                }
-            })).boxed(),
-            HttpMethod::POST => route(self.path(), post(|
-                //req: Request<Body>, 
-                data: Extension<D>, payload: extract::Json<I>| async move {
-                let result = (handler)(data, payload.0).await;
-                match result {
-                    Ok(result) => Ok(response::Json(result)),
-                    Err(e) => Err(e)
-                }
-            })).boxed(),
-            HttpMethod::PUT => route(self.path(), put(|
-                //req: Request<Body>, 
-                data: Extension<D>, payload: extract::Json<I>| async move {
-                let result = (handler)(data, payload.0).await;
-                match result {
-                    Ok(result) => Ok(response::Json(result)),
-                    Err(e) => Err(e)
-                }
-            })).boxed(),
-        };
-
-        route
-    }
-}
-
-*/
 
 #[cfg(test)]
 mod tests {
