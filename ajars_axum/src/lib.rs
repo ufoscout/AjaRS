@@ -286,31 +286,4 @@ mod tests {
         assert_eq!(body.message, payload.message);
     }
 
-
-
-#[tokio::test]
-async fn test_extractors() {
-
-    let app = route("/api", 
-    post(|req: Request<Body>, payload: extract::Json<String>| async move {
-        println!("CALL RECEIVED");
-    }));
-
-    // Act
-    let response = app
-        .oneshot(Request::builder()
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/json")
-            .uri("/api")
-            .body(Body::from(
-                serde_json::to_vec(&"payload").unwrap(),
-            )).unwrap())
-        .await
-        .unwrap();
-
-    // Assert
-    assert_eq!(response.status(), StatusCode::OK);
-
-}
-
 }
