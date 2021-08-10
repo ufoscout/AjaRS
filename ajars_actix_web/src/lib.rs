@@ -69,7 +69,8 @@ mod tests {
 
     use super::*;
     use crate::actix_web::test;
-    use ::actix_web::{App, HttpRequest};
+    use crate::actix_web::dev::Service;
+    use ::actix_web::{App, HttpRequest, http::{StatusCode, header}};
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
     
@@ -108,7 +109,7 @@ mod tests {
         ));
 
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .service(rest.handle(ping)),
         )
@@ -123,9 +124,13 @@ mod tests {
         .to_request();
 
         // Act
-        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+        let resp = app.call(req).await.unwrap();
 
         // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
         assert_eq!(resp.message, payload.message);
     }
 
@@ -139,7 +144,7 @@ mod tests {
         ));
 
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .service(rest.handle(ping)),
         )
@@ -154,9 +159,13 @@ mod tests {
         .to_request();
 
         // Act
-        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+        let resp = app.call(req).await.unwrap();
 
         // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
         assert_eq!(resp.message, payload.message);
     }
 
@@ -170,7 +179,7 @@ mod tests {
         ));
 
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .service(rest.handle(ping)),
         )
@@ -183,9 +192,13 @@ mod tests {
         let req = test::TestRequest::post().uri(rest.path()).set_json(&payload).to_request();
 
         // Act
-        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+        let resp = app.call(req).await.unwrap();
 
         // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
         assert_eq!(resp.message, payload.message);
     }
 
@@ -199,7 +212,7 @@ mod tests {
         ));
 
 
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .service(rest.handle(ping)),
         )
@@ -212,9 +225,13 @@ mod tests {
         let req = test::TestRequest::put().uri(rest.path()).set_json(&payload).to_request();
 
         // Act
-        let resp: PingResponse = test::read_response_json(&mut app, req).await;
+        let resp = app.call(req).await.unwrap();
 
         // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
         assert_eq!(resp.message, payload.message);
     }
 

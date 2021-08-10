@@ -144,6 +144,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -183,6 +184,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -223,6 +225,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -263,7 +266,8 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
-
+        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
+        
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
