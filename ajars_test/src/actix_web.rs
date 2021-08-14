@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
 use actix_rt::spawn;
-use ajars::{RestType, actix_web::{HandleActix, actix_web::{App, HttpRequest, HttpServer, ResponseError, web::{Data, Json}}}};
+use ajars::{RestType, actix_web::{ActixWebHandler, actix_web::{App, HttpRequest, HttpServer, ResponseError, web::Data}}};
 
 use crate::{api::*, error::MyError};
 
 impl ResponseError for MyError {}
 
 
-async fn echo(request: HttpRequest, _data: Data<()>, body: Simple<String>) -> Result<Json<Simple<String>>, MyError> {
+async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Result<Simple<String>, MyError> {
     println!("echo - Request path: {:?}", request.path());
     println!("echo - Request method: {:?}", request.method());
     println!("echo - Request query_string: {:?}", request.query_string());
     println!("echo - Request body: {:?}", body);
-    Ok(Json(body))
+    Ok(body)
 }
 
-async fn info(request: HttpRequest, _data: Data<()>, body: InfoRequest<String>) -> Result<Json<InfoResponse<String>>, MyError> {
+async fn info(body: InfoRequest<String>, request: HttpRequest, _data: Data<()>) -> Result<InfoResponse<String>, MyError> {
     println!("info - Request path: {:?}", request.path());
     println!("info - Request method: {:?}", request.method());
     println!("info - Request query_string: {:?}", request.query_string());
@@ -28,13 +28,13 @@ async fn info(request: HttpRequest, _data: Data<()>, body: InfoRequest<String>) 
         request_headers.insert(name.to_string(), value.to_str().expect("Header value should be a string").to_owned());
     }
 
-    Ok(Json(InfoResponse {
+    Ok(InfoResponse {
         request_headers,
         request_method: request.method().as_str().to_string(),
         request_path: request.path().to_string(),
         request_payload: body.payload,
         request_query_string: request.query_string().to_string(),
-    }))
+    })
 }
 
 /// spanws an actix server and returns the server port

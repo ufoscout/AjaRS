@@ -1,192 +1,238 @@
-use std::{future::Future, marker::PhantomData};
+use std::future::Future;
 
-use crate::actix_web::{
-    dev::Handler as ActixHandler,
-    web::{Data, Json, Query},
-    *,
-};
+use ::actix_web::{FromRequest, Resource, ResponseError, web::{self, Json, Query}};
 use ajars_core::{HttpMethod, RestType};
+use futures_util::future::FutureExt;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod actix_web {
     pub use actix_web::*;
 }
 
-pub trait HandleActix<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static> {
-    fn handle<H, D, R, E>(&self, handler: H) -> Resource
-    where
-        H: Handler<D, R, E, I, O>,
-        D: 'static,
-        R: Future<Output = Result<Json<O>, E>> + 'static,
-        E: ResponseError + 'static;
+mod attempt;
+
+pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
+    fn handle(&self, handler: H) -> Resource;
 }
 
-impl<I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, REST: RestType<I, O>>
-    HandleActix<I, O> for REST
+macro_rules! factory_tuple ({ $($param:ident)* } => {
+    #[allow(non_snake_case)]
+    impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> ActixWebHandler<I, O, ($($param,)*), H>
+    for REST 
+where 
+H: Clone + 'static + Fn(I, $($param,)*) -> R,
+R: Future<Output = Result<O, E>> + 'static,
+E: ResponseError + 'static,
+$( $param: FromRequest + 'static, )*
 {
-    fn handle<H, D, R, E>(&self, handler: H) -> Resource
-    where
-        H: Handler<D, R, E, I, O>,
-        D: 'static,
-        R: Future<Output = Result<Json<O>, E>> + 'static,
-        E: ResponseError + 'static,
-    {
+    fn handle(&self, handler: H) -> Resource {
         let resource = web::resource::<&str>(self.path());
 
         match self.method() {
-            HttpMethod::DELETE => resource.route(web::delete().to(QueryHandlerWrapper::new(handler))),
-            HttpMethod::GET => resource.route(web::get().to(QueryHandlerWrapper::new(handler))),
-            HttpMethod::POST => resource.route(web::post().to(JsonHandlerWrapper::new(handler))),
-            HttpMethod::PUT => resource.route(web::put().to(JsonHandlerWrapper::new(handler))),
+            HttpMethod::DELETE => resource.route(web::delete().to(
+                move |json: Query<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+            })),
+            HttpMethod::GET => resource.route(web::get().to(
+                move |json: Query<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+            })),
+            HttpMethod::POST => resource.route(web::post().to(
+                move |json: Json<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+            })),
+            HttpMethod::PUT => resource.route(web::put().to(
+                move |json: Json<I>, $( $param: $param,)*| {
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+            })),
         }
     }
 }
+});
 
-pub trait Handler<D, R, E, I, O>: Clone + 'static
-where
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn call(&self, param: (HttpRequest, Data<D>, I)) -> R;
-}
+factory_tuple! {}
+factory_tuple! { P0 }
+factory_tuple! { P0 P1 }
+factory_tuple! { P0 P1 P2 }
+factory_tuple! { P0 P1 P2 P3 }
+factory_tuple! { P0 P1 P2 P3 P4 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 }
+factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
+//factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
-impl<F, D, R, E, I, O> Handler<D, R, E, I, O> for F
-where
-    F: 'static + Clone + Fn(HttpRequest, Data<D>, I) -> R,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn call(&self, param: (HttpRequest, Data<D>, I)) -> R {
-        self(param.0, param.1, param.2)
+#[cfg(test)]
+mod tests {
+
+    use std::fmt::Display;
+
+    use super::*;
+    use crate::actix_web::test;
+    use crate::actix_web::dev::Service;
+    use ::actix_web::{App, HttpRequest, http::{StatusCode, header}};
+    use ajars_core::RestFluent;
+    use serde::{Deserialize, Serialize};
+    
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {
+        pub message: String,
     }
-}
+    
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {
+        pub message: String,
+    }
 
-pub struct JsonHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    handler: H,
-    phantom_d: PhantomData<D>,
-    phantom_r: PhantomData<R>,
-    phantom_e: PhantomData<E>,
-    phantom_i: PhantomData<I>,
-    phantom_o: PhantomData<O>,
-}
+    async fn ping(body: PingRequest, _request: HttpRequest ) -> Result<PingResponse, ServerError> {
+        Ok(PingResponse { message: body.message })
+    }
 
-impl<H, D, R, E, I, O> JsonHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    pub fn new(handler: H) -> Self {
-        Self {
-            handler,
-            phantom_d: PhantomData,
-            phantom_r: PhantomData,
-            phantom_e: PhantomData,
-            phantom_i: PhantomData,
-            phantom_o: PhantomData,
+    #[derive(Debug, Clone)]
+    struct ServerError {}
+
+    impl Display for ServerError {
+        fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Ok(())
         }
     }
-}
 
-impl<H, D, R, E, I, O> Clone for JsonHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn clone(&self) -> Self {
-        Self::new(self.handler.clone())
+    impl ResponseError for ServerError {}
+
+    #[actix_rt::test]
+    async fn should_create_a_delete_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let app = test::init_service(
+            App::new()
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::delete()
+        .uri(&format!("{}?message={}", rest.path(), payload.message))
+        .to_request();
+
+        // Act
+        let resp = app.call(req).await.unwrap();
+
+        // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
+        assert_eq!(resp.message, payload.message);
     }
-}
 
-impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Json<I>), R> for JsonHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    D: 'static,
-    R: Future<Output = Result<Json<O>, E>> + 'static,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn call(&self, param: (HttpRequest, Data<D>, Json<I>)) -> R {
-        self.handler.call((param.0, param.1, param.2.into_inner()))
+    #[actix_rt::test]
+    async fn should_create_a_get_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
+
+
+        let app = test::init_service(
+            App::new()
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::get()
+        .uri(&format!("{}?message={}", rest.path(), payload.message))
+        .to_request();
+
+        // Act
+        let resp = app.call(req).await.unwrap();
+
+        // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
+        assert_eq!(resp.message, payload.message);
     }
-}
 
-pub struct QueryHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    handler: H,
-    phantom_d: PhantomData<D>,
-    phantom_r: PhantomData<R>,
-    phantom_e: PhantomData<E>,
-    phantom_i: PhantomData<I>,
-    phantom_o: PhantomData<O>,
-}
+    #[actix_rt::test]
+    async fn should_create_a_post_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
 
-impl<H, D, R, E, I, O> QueryHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    pub fn new(handler: H) -> Self {
-        Self {
-            handler,
-            phantom_d: PhantomData,
-            phantom_r: PhantomData,
-            phantom_e: PhantomData,
-            phantom_i: PhantomData,
-            phantom_o: PhantomData,
-        }
+
+        let app = test::init_service(
+            App::new()
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::post().uri(rest.path()).set_json(&payload).to_request();
+
+        // Act
+        let resp = app.call(req).await.unwrap();
+
+        // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
+        assert_eq!(resp.message, payload.message);
     }
-}
 
-impl<H, D, R, E, I, O> Clone for QueryHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    R: Future<Output = Result<Json<O>, E>>,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn clone(&self) -> Self {
-        Self::new(self.handler.clone())
-    }
-}
+    #[actix_rt::test]
+    async fn should_create_a_put_endpoint() {
+ 
+        // Arrange
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!(
+            "/api/something/{}",
+            rand::random::<usize>()
+        ));
 
-impl<H, D, R, E, I, O> ActixHandler<(HttpRequest, Data<D>, Query<I>), R> for QueryHandlerWrapper<H, D, R, E, I, O>
-where
-    H: Handler<D, R, E, I, O> + Clone + 'static,
-    D: 'static,
-    R: Future<Output = Result<Json<O>, E>> + 'static,
-    E: ResponseError + 'static,
-    I: Serialize + DeserializeOwned + 'static,
-    O: Serialize + DeserializeOwned + 'static,
-{
-    fn call(&self, param: (HttpRequest, Data<D>, Query<I>)) -> R {
-        self.handler.call((param.0, param.1, param.2.into_inner()))
+
+        let app = test::init_service(
+            App::new()
+                .service(rest.handle(ping)),
+        )
+        .await;
+
+        let payload = PingRequest {
+            message: format!("message{}", rand::random::<usize>())
+        };
+
+        let req = test::TestRequest::put().uri(rest.path()).set_json(&payload).to_request();
+
+        // Act
+        let resp = app.call(req).await.unwrap();
+
+        // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!("application/json", resp.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
+
+        let resp: PingResponse = test::read_body_json(resp).await;
+        assert_eq!(resp.message, payload.message);
     }
+
 }
