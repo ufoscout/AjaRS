@@ -9,8 +9,6 @@ pub mod actix_web {
     pub use actix_web::*;
 }
 
-mod attempt;
-
 pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
     fn handle(&self, handler: H) -> Resource;
 }
