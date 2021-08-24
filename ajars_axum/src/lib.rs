@@ -1,5 +1,5 @@
 use std::future::Future;
-use ::axum::{extract::*, handler::{delete, get, post, put}, response::*, routing::BoxRoute, Router};
+use ::axum::{extract::{self, FromRequest}, handler::{delete, get, post, put}, response::{self, IntoResponse}, routing::BoxRoute, Router};
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -23,20 +23,20 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
         fn route<REST: RestType<I, O>>(self, rest: &REST) -> Router<BoxRoute> {
             let route = match rest.method() {
                 HttpMethod::DELETE => Router::new().route(rest.path(), delete(
-                    |payload: Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
+                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
                 })).boxed(),
                 HttpMethod::GET => Router::new().route(rest.path(), get(
-                    |payload: Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
+                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
                     })).boxed(),
                 HttpMethod::POST => Router::new().route(rest.path(), post(
-                    |payload: Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
+                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
                     })).boxed(),
                 HttpMethod::PUT => Router::new().route(rest.path(), put(
-                    |payload: Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
+                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
                     })).boxed(),
             };
     
