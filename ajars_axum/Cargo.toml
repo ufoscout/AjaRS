@@ -13,10 +13,9 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.1.1", default-features = false }
+axum = { version = "0.2", default-features = false }
 ajars_core = { path = "../ajars_core", version = "0.5.0" }
 serde = { version = "1", default-features = false }
-http = "0.2"
 
 [dev-dependencies]
 hyper = "0.14"

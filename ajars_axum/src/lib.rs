@@ -1,5 +1,5 @@
 use std::future::Future;
-use ::axum::{extract::FromRequest, prelude::*, response::IntoResponse, routing::BoxRoute};
+use ::axum::{extract::*, handler::{delete, get, post, put}, response::*, routing::BoxRoute, Router};
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -8,7 +8,7 @@ pub mod axum {
 }
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T> {
-    fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body>;
+    fn route<REST: RestType<I, O>>(self, rest: &REST) -> Router<BoxRoute>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -18,25 +18,25 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     R: Future<Output = Result<O, E>> + Send,
     E: IntoResponse + Send + 'static,
     F: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
-    $( $param: FromRequest<Body> + Send + 'static, )*
+    $( $param: FromRequest + Send + 'static, )*
     {
-        fn route<REST: RestType<I, O>>(self, rest: &REST) -> BoxRoute<Body> {
+        fn route<REST: RestType<I, O>>(self, rest: &REST) -> Router<BoxRoute> {
             let route = match rest.method() {
-                HttpMethod::DELETE => route(rest.path(), delete(
-                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                HttpMethod::DELETE => Router::new().route(rest.path(), delete(
+                    |payload: Query<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
                 })).boxed(),
-                HttpMethod::GET => route(rest.path(), get(
-                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                HttpMethod::GET => Router::new().route(rest.path(), get(
+                    |payload: Query<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
                     })).boxed(),
-                HttpMethod::POST => route(rest.path(), post(
-                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                HttpMethod::POST => Router::new().route(rest.path(), post(
+                    |payload: Json<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
                     })).boxed(),
-                HttpMethod::PUT => route(rest.path(), put(
-                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                HttpMethod::PUT => Router::new().route(rest.path(), put(
+                    |payload: Json<I>, $( $param: $param,)*| async move {
+                        (self)(payload.0, $( $param,)*).await.map(|result| Json(result))
                     })).boxed(),
             };
     
@@ -58,13 +58,13 @@ factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
 pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
-    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> BoxRoute<Body>;
+    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute>;
 }
 
 impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, REST: RestType<I, O>>
 AxumRoute<I, O> for REST {
 
-    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> BoxRoute<Body> {
+    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute> {
         handler.route(self)
     }
 
@@ -78,8 +78,7 @@ mod tests {
 
     use super::*;
     use ajars_core::RestFluent;
-    use ::axum::{AddExtensionLayer, extract::Extension};
-    use http::StatusCode;
+    use ::axum::{body::Body, http::{header, Method, Request, Response, StatusCode}, AddExtensionLayer, extract::Extension, };
     use serde::{Deserialize, Serialize};
     use tower::ServiceExt; // for `app.oneshot()`
 
@@ -108,9 +107,14 @@ mod tests {
     }
 
     impl IntoResponse for ServerError {
-        fn into_response(self) -> http::Response<Body> {
-            "error".into_response()
+        
+        type Body = axum::body::Body;
+        type BodyError = <Self::Body as axum::body::HttpBody>::Error;
+
+        fn into_response(self) -> Response<Self::Body> {
+            Response::new(Body::empty())
         }
+
     }
 
     #[tokio::test]
@@ -135,8 +139,8 @@ mod tests {
         // Act
         let response = app
             .oneshot(Request::builder()
-                .method(http::Method::DELETE)
-                .header(http::header::CONTENT_TYPE, "application/json")
+                .method(Method::DELETE)
+                .header(header::CONTENT_TYPE, "application/json")
                 .uri(&format!("{}?message={}", rest.path(), payload.message))
                 .body(Body::empty()).unwrap())
             .await
@@ -144,7 +148,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
+        assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -175,8 +179,8 @@ mod tests {
         // Act
         let response = app
             .oneshot(Request::builder()
-                .method(http::Method::GET)
-                .header(http::header::CONTENT_TYPE, "application/json")
+                .method(Method::GET)
+                .header(header::CONTENT_TYPE, "application/json")
                 .uri(&format!("{}?message={}", rest.path(), payload.message))
                 .body(Body::empty()).unwrap())
             .await
@@ -184,7 +188,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
+        assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -214,8 +218,8 @@ mod tests {
         // Act
         let response = app
             .oneshot(Request::builder()
-                .method(http::Method::POST)
-                .header(http::header::CONTENT_TYPE, "application/json")
+                .method(Method::POST)
+                .header(header::CONTENT_TYPE, "application/json")
                 .uri(rest.path())
                 .body(Body::from(
                     serde_json::to_vec(&payload).unwrap(),
@@ -225,7 +229,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
+        assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
@@ -255,8 +259,8 @@ mod tests {
         // Act
         let response = app
             .oneshot(Request::builder()
-                .method(http::Method::PUT)
-                .header(http::header::CONTENT_TYPE, "application/json")
+                .method(Method::PUT)
+                .header(header::CONTENT_TYPE, "application/json")
                 .uri(rest.path())
                 .body(Body::from(
                     serde_json::to_vec(&payload).unwrap(),
@@ -266,7 +270,7 @@ mod tests {
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!("application/json", response.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap());
+        assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
         
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
