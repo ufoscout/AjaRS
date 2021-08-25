@@ -119,13 +119,8 @@ impl AjarsWeb {
     ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder::new(
-            rest,
-            &self.window,
-            url,
-            self.interceptor.as_ref(),
-        )
-        .add_header("Content-Type", "application/json")
+        RequestBuilder::new(rest, &self.window, url, self.interceptor.as_ref())
+            .add_header("Content-Type", "application/json")
     }
 }
 
@@ -142,7 +137,7 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
 impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
     RequestBuilder<'a, I, O, REST>
 {
-    pub fn new(rest: &'a REST, window: &'a Window, url: String, interceptor: &'a dyn Interceptor ) -> Self {
+    pub fn new(rest: &'a REST, window: &'a Window, url: String, interceptor: &'a dyn Interceptor) -> Self {
         RequestBuilder {
             rest,
             window,
@@ -161,11 +156,12 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     }
 
     /// Enable HTTP basic authentication.
-    pub fn basic_auth(self, username: &str, password: Option<&str>) -> Result<Self, Error>
-    {
+    pub fn basic_auth(self, username: &str, password: Option<&str>) -> Result<Self, Error> {
         let user_pass = format!("{}:{}", username, password.unwrap_or_default());
-        let encoded_user_pass = self.window.btoa(&user_pass)
-            .map_err(|err| Error::Builder { context: "Failed to encode in base64 the basic auth string".to_owned(), source: err.into() })?;
+        let encoded_user_pass = self.window.btoa(&user_pass).map_err(|err| Error::Builder {
+            context: "Failed to encode in base64 the basic auth string".to_owned(),
+            source: err.into(),
+        })?;
 
         Ok(self.add_header("AUTHORIZATION", format!("Basic {}", encoded_user_pass)))
     }
@@ -289,4 +285,3 @@ async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebRespon
         Ok(data)
     }
 }
-

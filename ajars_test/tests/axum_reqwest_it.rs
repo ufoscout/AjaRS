@@ -1,9 +1,12 @@
-use tokio::time::sleep;
-use ajars_test::axum::spawn_axum;
 use ajars_test::api::Simple;
+use ajars_test::axum::spawn_axum;
 use std::time::Duration;
+use tokio::time::sleep;
 
-use ajars::{Rest, RestFluent, RestType, reqwest::{reqwest::ClientBuilder, AjarsReqwest}};
+use ajars::{
+    reqwest::{reqwest::ClientBuilder, AjarsReqwest},
+    Rest, RestFluent, RestType,
+};
 
 #[actix_rt::test]
 async fn test_reqwest_rest() {
@@ -25,9 +28,7 @@ async fn test_reqwest_rest() {
     .await;
 }
 
-async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(
-    rest: &REST,
-) {
+async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(rest: &REST) {
     // Arrange
     let rest_clone = rest.clone();
     let port = spawn_axum(rest_clone);
@@ -39,12 +40,8 @@ async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<Str
     let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 
     // Act
-    let response = ajars
-        .request(rest)
-        .send(&req_data).await;
+    let response = ajars.request(rest).send(&req_data).await;
 
     // Assert
     assert_eq!(req_data, response.unwrap());
 }
-
-

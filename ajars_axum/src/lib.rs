@@ -1,7 +1,13 @@
-use std::future::Future;
-use ::axum::{extract::{self, FromRequest}, handler::{delete, get, post, put}, response::{self, IntoResponse}, routing::BoxRoute, Router};
+use ::axum::{
+    extract::{self, FromRequest},
+    handler::{delete, get, post, put},
+    response::{self, IntoResponse},
+    routing::BoxRoute,
+    Router,
+};
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
+use std::future::Future;
 
 pub mod axum {
     pub use axum::*;
@@ -14,7 +20,7 @@ pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + Deserializ
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
     impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, F, R, E, $($param,)*> AxumHandler<I, O, ($($param,)*)> for F
-    where 
+    where
     R: Future<Output = Result<O, E>> + Send,
     E: IntoResponse + Send + 'static,
     F: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
@@ -39,7 +45,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
                         (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
                     })).boxed(),
             };
-    
+
             route
         }
     }
@@ -57,19 +63,21 @@ factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
-pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static> {
+pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static>
+{
     fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute>;
 }
 
-impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, REST: RestType<I, O>>
-AxumRoute<I, O> for REST {
-
+impl<
+        I: Serialize + DeserializeOwned + Send + 'static,
+        O: Serialize + DeserializeOwned + Send + 'static,
+        REST: RestType<I, O>,
+    > AxumRoute<I, O> for REST
+{
     fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute> {
         handler.route(self)
     }
-
-} 
-
+}
 
 #[cfg(test)]
 mod tests {
@@ -77,8 +85,13 @@ mod tests {
     use std::fmt::Display;
 
     use super::*;
+    use ::axum::{
+        body::Body,
+        extract::Extension,
+        http::{header, Method, Request, Response, StatusCode},
+        AddExtensionLayer,
+    };
     use ajars_core::RestFluent;
-    use ::axum::{body::Body, http::{header, Method, Request, Response, StatusCode}, AddExtensionLayer, extract::Extension, };
     use serde::{Deserialize, Serialize};
     use tower::ServiceExt; // for `app.oneshot()`
 
@@ -86,14 +99,13 @@ mod tests {
     pub struct PingRequest {
         pub message: String,
     }
-    
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct PingResponse {
         pub message: String,
     }
 
-    async fn ping(
-        body: PingRequest, _data: Extension<()>) -> Result<PingResponse, ServerError> {
+    async fn ping(body: PingRequest, _data: Extension<()>) -> Result<PingResponse, ServerError> {
         Ok(PingResponse { message: body.message })
     }
 
@@ -107,42 +119,34 @@ mod tests {
     }
 
     impl IntoResponse for ServerError {
-        
         type Body = axum::body::Body;
         type BodyError = <Self::Body as axum::body::HttpBody>::Error;
 
         fn into_response(self) -> Response<Self::Body> {
             Response::new(Body::empty())
         }
-
     }
 
     #[tokio::test]
     async fn should_create_a_delete_endpoint() {
-
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest =
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
 
-        let app = rest
-            .route(ping)
-            .layer(AddExtensionLayer::new(()));
-
-
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         // Act
         let response = app
-            .oneshot(Request::builder()
-                .method(Method::DELETE)
-                .header(header::CONTENT_TYPE, "application/json")
-                .uri(&format!("{}?message={}", rest.path(), payload.message))
-                .body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .method(Method::DELETE)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri(&format!("{}?message={}", rest.path(), payload.message))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
@@ -159,30 +163,23 @@ mod tests {
 
     #[tokio::test]
     async fn should_create_a_get_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::get(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
 
-        let app = rest
-            .route(ping)
-            .layer(AddExtensionLayer::new(()));
-
-
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         // Act
         let response = app
-            .oneshot(Request::builder()
-                .method(Method::GET)
-                .header(header::CONTENT_TYPE, "application/json")
-                .uri(&format!("{}?message={}", rest.path(), payload.message))
-                .body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri(&format!("{}?message={}", rest.path(), payload.message))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
@@ -199,31 +196,23 @@ mod tests {
 
     #[tokio::test]
     async fn should_create_a_post_endpoint() {
-
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::post(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
 
-        let app = rest
-            .route(ping)
-            .layer(AddExtensionLayer::new(()));
-
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         // Act
         let response = app
-            .oneshot(Request::builder()
-                .method(Method::POST)
-                .header(header::CONTENT_TYPE, "application/json")
-                .uri(rest.path())
-                .body(Body::from(
-                    serde_json::to_vec(&payload).unwrap(),
-                )).unwrap())
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri(rest.path())
+                    .body(Body::from(serde_json::to_vec(&payload).unwrap()))
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
@@ -238,40 +227,32 @@ mod tests {
         assert_eq!(body.message, payload.message);
     }
 
-
     #[tokio::test]
     async fn should_create_a_put_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::put(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest
-            .route(ping)
-            .layer(AddExtensionLayer::new(()));
+        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
 
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         // Act
         let response = app
-            .oneshot(Request::builder()
-                .method(Method::PUT)
-                .header(header::CONTENT_TYPE, "application/json")
-                .uri(rest.path())
-                .body(Body::from(
-                    serde_json::to_vec(&payload).unwrap(),
-                )).unwrap())
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri(rest.path())
+                    .body(Body::from(serde_json::to_vec(&payload).unwrap()))
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
         // Assert
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
-        
+
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
@@ -281,23 +262,18 @@ mod tests {
 
     #[tokio::test]
     async fn route_should_accept_variable_number_of_params() {
-
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest =
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
         // Accept 1 param
-        rest.route(|body: PingRequest| async {
-            Result::<_, ServerError>::Ok(PingResponse { message: body.message })
-        });
+        rest.route(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) });
 
         // Accept 2 param
         rest.route(|body: PingRequest, _: Extension<()>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
-        
+
         // Accept 3 param
         rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
@@ -312,7 +288,5 @@ mod tests {
         rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>, _: Request<Body>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
-
     }
-
 }

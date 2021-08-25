@@ -8,4 +8,3 @@ impl Display for MyError {
         Ok(())
     }
 }
-

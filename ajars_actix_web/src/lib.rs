@@ -1,6 +1,9 @@
 use std::future::Future;
 
-use ::actix_web::{FromRequest, Resource, ResponseError, web::{self, Json, Query}};
+use ::actix_web::{
+    web::{self, Json, Query},
+    FromRequest, Resource, ResponseError,
+};
 use ajars_core::{HttpMethod, RestType};
 use futures_util::future::FutureExt;
 use serde::{de::DeserializeOwned, Serialize};
@@ -16,8 +19,8 @@ pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + Deseri
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
     impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> ActixWebHandler<I, O, ($($param,)*), H>
-    for REST 
-where 
+    for REST
+where
 H: Clone + 'static + Fn(I, $($param,)*) -> R,
 R: Future<Output = Result<O, E>> + 'static,
 E: ResponseError + 'static,
@@ -66,23 +69,26 @@ mod tests {
     use std::fmt::Display;
 
     use super::*;
-    use crate::actix_web::test;
     use crate::actix_web::dev::Service;
-    use ::actix_web::{App, HttpRequest, http::{StatusCode, header}};
+    use crate::actix_web::test;
+    use ::actix_web::{
+        http::{header, StatusCode},
+        App, HttpRequest,
+    };
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
-    
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct PingRequest {
         pub message: String,
     }
-    
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct PingResponse {
         pub message: String,
     }
 
-    async fn ping(body: PingRequest, _request: HttpRequest ) -> Result<PingResponse, ServerError> {
+    async fn ping(body: PingRequest, _request: HttpRequest) -> Result<PingResponse, ServerError> {
         Ok(PingResponse { message: body.message })
     }
 
@@ -99,27 +105,15 @@ mod tests {
 
     #[actix_rt::test]
     async fn should_create_a_delete_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest =
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = test::init_service(App::new().service(rest.handle(ping))).await;
 
-        let app = test::init_service(
-            App::new()
-                .service(rest.handle(ping)),
-        )
-        .await;
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
-
-        let req = test::TestRequest::delete()
-        .uri(&format!("{}?message={}", rest.path(), payload.message))
-        .to_request();
+        let req = test::TestRequest::delete().uri(&format!("{}?message={}", rest.path(), payload.message)).to_request();
 
         // Act
         let resp = app.call(req).await.unwrap();
@@ -134,27 +128,14 @@ mod tests {
 
     #[actix_rt::test]
     async fn should_create_a_get_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::get(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = test::init_service(App::new().service(rest.handle(ping))).await;
 
-        let app = test::init_service(
-            App::new()
-                .service(rest.handle(ping)),
-        )
-        .await;
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
-
-        let req = test::TestRequest::get()
-        .uri(&format!("{}?message={}", rest.path(), payload.message))
-        .to_request();
+        let req = test::TestRequest::get().uri(&format!("{}?message={}", rest.path(), payload.message)).to_request();
 
         // Act
         let resp = app.call(req).await.unwrap();
@@ -169,23 +150,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn should_create_a_post_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::post(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = test::init_service(App::new().service(rest.handle(ping))).await;
 
-        let app = test::init_service(
-            App::new()
-                .service(rest.handle(ping)),
-        )
-        .await;
-
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         let req = test::TestRequest::post().uri(rest.path()).set_json(&payload).to_request();
 
@@ -202,23 +172,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn should_create_a_put_endpoint() {
- 
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::put(format!(
-            "/api/something/{}",
-            rand::random::<usize>()
-        ));
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
 
+        let app = test::init_service(App::new().service(rest.handle(ping))).await;
 
-        let app = test::init_service(
-            App::new()
-                .service(rest.handle(ping)),
-        )
-        .await;
-
-        let payload = PingRequest {
-            message: format!("message{}", rand::random::<usize>())
-        };
+        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
         let req = test::TestRequest::put().uri(rest.path()).set_json(&payload).to_request();
 
@@ -232,5 +191,4 @@ mod tests {
         let resp: PingResponse = test::read_body_json(resp).await;
         assert_eq!(resp.message, payload.message);
     }
-
 }

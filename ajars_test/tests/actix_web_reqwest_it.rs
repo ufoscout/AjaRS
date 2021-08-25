@@ -28,9 +28,7 @@ async fn test_reqwest_rest() {
     .await;
 }
 
-async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(
-    rest: &REST,
-) {
+async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(rest: &REST) {
     // Arrange
     let rest_clone = rest.clone();
     let port = spawn_actix_web(rest_clone);
@@ -47,5 +45,3 @@ async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<Str
     // Assert
     assert_eq!(req_data, response.unwrap());
 }
-
-

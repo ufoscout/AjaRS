@@ -1,6 +1,4 @@
-use actix_web::{
-    App, HttpRequest, HttpServer, ResponseError,
-};
+use actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use ajars::actix_web::ActixWebHandler;
 use ajars_common::{hello::*, ping::*};
 use chrono::Local;

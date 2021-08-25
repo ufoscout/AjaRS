@@ -1,10 +1,10 @@
-use tokio::time::sleep;
-use ajars_test::axum::spawn_axum;
 use ajars_test::api::Simple;
+use ajars_test::axum::spawn_axum;
 use std::time::Duration;
+use tokio::time::sleep;
 
-use ajars::RestFluent;
 use ajars::surf::AjarsSurf;
+use ajars::RestFluent;
 
 #[actix_rt::test]
 async fn test_surf_rest() {
@@ -13,21 +13,12 @@ async fn test_surf_rest() {
         rand::random::<usize>()
     )))
     .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::get(format!(
-        "/api/{}",
-        rand::random::<usize>()
-    )))
-    .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!(
-        "/api/{}",
-        rand::random::<usize>()
-    )))
-    .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!(
-        "/api/{}",
-        rand::random::<usize>()
-    )))
-    .await;
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::get(format!("/api/{}", rand::random::<usize>())))
+        .await;
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!("/api/{}", rand::random::<usize>())))
+        .await;
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!("/api/{}", rand::random::<usize>())))
+        .await;
 }
 
 async fn perform_surf_call(rest: &RestFluent<Simple<String>, Simple<String>>) {
@@ -47,4 +38,3 @@ async fn perform_surf_call(rest: &RestFluent<Simple<String>, Simple<String>>) {
     // Assert
     assert_eq!(req_data, response.unwrap());
 }
-

@@ -1,12 +1,17 @@
 use std::collections::HashMap;
 
 use actix_rt::spawn;
-use ajars::{RestType, actix_web::{ActixWebHandler, actix_web::{App, HttpRequest, HttpServer, ResponseError, web::Data}}};
+use ajars::{
+    actix_web::{
+        actix_web::{web::Data, App, HttpRequest, HttpServer, ResponseError},
+        ActixWebHandler,
+    },
+    RestType,
+};
 
 use crate::{api::*, error::MyError};
 
 impl ResponseError for MyError {}
-
 
 async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Result<Simple<String>, MyError> {
     println!("echo - Request path: {:?}", request.path());
@@ -16,7 +21,11 @@ async fn echo(body: Simple<String>, request: HttpRequest, _data: Data<()>) -> Re
     Ok(body)
 }
 
-async fn info(body: InfoRequest<String>, request: HttpRequest, _data: Data<()>) -> Result<InfoResponse<String>, MyError> {
+async fn info(
+    body: InfoRequest<String>,
+    request: HttpRequest,
+    _data: Data<()>,
+) -> Result<InfoResponse<String>, MyError> {
     println!("info - Request path: {:?}", request.path());
     println!("info - Request method: {:?}", request.method());
     println!("info - Request query_string: {:?}", request.query_string());
@@ -38,27 +47,30 @@ async fn info(body: InfoRequest<String>, request: HttpRequest, _data: Data<()>) 
 }
 
 /// spanws an actix server and returns the server port
-pub fn spawn_actix_web<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(echo_rest: REST) -> u16 {
+pub fn spawn_actix_web<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(
+    echo_rest: REST,
+) -> u16 {
     let free_port = port_check::free_local_port().unwrap();
     let address = format!("127.0.0.1:{}", free_port);
 
     // Start Server
     spawn(async move {
         println!("Start actix-web to {}", address);
-        HttpServer::new(move || App::new()
+        HttpServer::new(move || {
+            App::new()
                 .app_data(Data::new(()))
                 .service(echo_rest.handle(echo))
                 .service(INFO_DELETE.handle(info))
                 .service(INFO_GET.handle(info))
                 .service(INFO_POST.handle(info))
                 .service(INFO_PUT.handle(info))
-            )
-            .bind(&address)
-            .and_then(|ser| Ok(ser))
-            .unwrap()
-            .run()
-            .await
-            .unwrap();
+        })
+        .bind(&address)
+        .and_then(|ser| Ok(ser))
+        .unwrap()
+        .run()
+        .await
+        .unwrap();
     });
     free_port
 }
