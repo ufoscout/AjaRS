@@ -1,55 +1,76 @@
 # AjaRS
 
-A small [Rust](https://www.rust-lang.org) library to resolve the duplicated code that usually exists between the definition of a Server side REST endpoint and the one of a REST Client that calls it.
+A small [Rust](https://www.rust-lang.org) library to remove the duplicated code between the definition of a Server side REST endpoint 
+and the one of a REST Client that calls it.
 
 ## The problem
 When we create a REST endpoint, we need to provide at least four different values:
 1. The path of the resource
 1. The HTTP Method
-1. The Json type consumed
-1. The Json type produced
+1. The JSON type consumed
+1. The JSON type produced
 
 Exactly the same four values have to be provided when creating a REST client for that endpoint.
 
-For example, if we use [actix-web](TODO_ADD_LINK), an endpoint could be created with:
+For example, if we use [actix-web](https://github.com/actix/actix-web), an endpoint could be created with:
 ```rust
-HttpServer::new(move || 
-        App::new().service(
+use ajars::actix_web::actix_web::{App, Result, web::{self, Json}};
+use serde::{Deserialize, Serialize};
 
-            web::resource("/ping") // PATH definition here
-            
-            .route(web::post()     // HTTP Method definition here
-            
-            .to(pong)              // The signature of the `pong` fn determines the
-                                   // Json types produced and consumed. In this case
-                                   // PingRequest and PingResponse
-            )
-        )
+App::new().service(
+
+    web::resource("/ping")  // PATH definition here
+    
+    .route(web::post()     // HTTP Method definition here
+    
+    .to(ping)              // The signature of the `ping` fn determines the
+                        // JSON types produced and consumed. In this case
+                        // PingRequest and PingResponse
     )
-    .bind("127.0.0.1:8080")
-    .unwrap()
-    .run()
-    .await
-    .unwrap();
-});
+);
 
-async fn ping(request: HttpRequest, _data: Data<()>, body: PingRequest) -> Result<Json<PingResponse>, ServerError> {
+async fn ping(_body: Json<PingRequest>) -> Result<Json<PingResponse>> {
     Ok(Json(PingResponse { message: "PONG".to_owned() }))
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {
+    pub message: String,
+}
 ```
 
-Let's now declare a client using [reqwest](TODO_ADD_LINK)
+Let's now declare a client using [reqwest](https://github.com/seanmonstar/reqwest)
 ```rust
-let client = ClientBuilder::new().build().unwrap();
+use ajars::reqwest::reqwest::ClientBuilder;
+use serde::{Deserialize, Serialize};
 
-let url = "http://127.0.0.1:8080/ping";   // DUPLICATED '/ping' path definition
+pub async fn call() {
+    let client = ClientBuilder::new().build().unwrap();
 
-let response = client.post(&url)   // DUPLICATED HTTP Post method definition
+    let url = "http://127.0.0.1:8080/ping";            // Duplicated '/ping' path definition
+    
+    client.post(url)                                   // Duplicated HTTP Post method definition
+    
+    .json(&PingRequest { message: "PING".to_owned() }) // Duplicated request type. Not checked at compile time
+    
+    .send().await.unwrap()
+    .json::<PingResponse>().await.unwrap();            // Duplicated response type. Not checked at compile time
+}
 
-.json(PingRequest { message: "PING".to_owned() }) // Duplicated request type. Not checked at compile time
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {
+    pub message: String,
+}
 
-.send().await?.json::<PingResponse>().await    // Duplicated response type. Not checked at compile time
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {
+    pub message: String,
+}
 ```
 
 Wouldn't it be good to have those values declared only once with all types checked at compile time?

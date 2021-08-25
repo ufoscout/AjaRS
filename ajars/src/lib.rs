@@ -1,3 +1,5 @@
+#![doc = include_str!("../../README.md")]
+
 #[cfg(feature = "actix_web")]
 pub mod actix_web {
     pub use ajars_actix_web::*;
