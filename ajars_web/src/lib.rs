@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -118,20 +119,20 @@ impl AjarsWeb {
     ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder {
+        RequestBuilder::new(
             rest,
-            window: &self.window,
-            interceptor: self.interceptor.as_ref(),
+            &self.window,
             url,
-            phantom_i: PhantomData,
-            phantom_o: PhantomData,
-        }
+            self.interceptor.as_ref(),
+        )
+        .add_header("Content-Type", "application/json")
     }
 }
 
 pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>> {
     rest: &'a REST,
     interceptor: &'a dyn Interceptor,
+    headers: HashMap<String, String>,
     window: &'a Window,
     url: String,
     phantom_i: PhantomData<I>,
@@ -141,6 +142,43 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
 impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
     RequestBuilder<'a, I, O, REST>
 {
+    pub fn new(rest: &'a REST, window: &'a Window, url: String, interceptor: &'a dyn Interceptor ) -> Self {
+        RequestBuilder {
+            rest,
+            window,
+            interceptor,
+            url,
+            headers: HashMap::new(),
+            phantom_i: PhantomData,
+            phantom_o: PhantomData,
+        }
+    }
+
+    /// Add a header to the request
+    pub fn add_header<K: Into<String>, V: Into<String>>(mut self, key: K, value: V) -> Self {
+        self.headers.insert(key.into(), value.into());
+        self
+    }
+
+    /// Enable HTTP basic authentication.
+    pub fn basic_auth(self, username: &str, password: Option<&str>) -> Result<Self, Error>
+    {
+        let user_pass = format!("{}:{}", username, password.unwrap_or_default());
+        let encoded_user_pass = self.window.btoa(&user_pass)
+            .map_err(|err| Error::Builder { context: "Failed to encode in base64 the basic auth string".to_owned(), source: err.into() })?;
+
+        Ok(self.add_header("AUTHORIZATION", format!("Basic {}", encoded_user_pass)))
+    }
+
+    /// Enable HTTP bearer authentication.
+    pub fn bearer_auth<T>(self, token: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        let header_value = format!("Bearer {}", token);
+        self.add_header("AUTHORIZATION", header_value)
+    }
+
     /// Sends the Request to the target URL, returning a
     /// future Response.
     pub async fn send(self, data: &I) -> Result<O, Error> {
@@ -149,10 +187,12 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
             source: WebError(format!("{:?}", err)),
         })?;
 
-        headers.append("Content-Type", "application/json").map_err(|err| Error::Builder {
-            context: "Failed to append Context-Type header".to_owned(),
-            source: WebError(format!("{:?}", err)),
-        })?;
+        for (header_key, header_value) in self.headers {
+            headers.append(&header_key, &header_value).map_err(|err| Error::Builder {
+                context: format!("Failed to append header with key [{}] and value [{}]", header_key, header_value),
+                source: WebError(format!("{:?}", err)),
+            })?;
+        }
 
         let mut opts = RequestInit::new();
         opts.mode(RequestMode::Cors);

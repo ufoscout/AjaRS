@@ -15,7 +15,6 @@ impl IntoResponse for MyError {
 
 }
 
-
 async fn echo(body: Simple<String>, uri: http::Uri, method: http::Method) -> Result<Simple<String>, MyError> {
     println!("echo - Request path: {:?}", uri.path());
     println!("echo - Request method: {:?}", method);
