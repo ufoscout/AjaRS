@@ -13,36 +13,37 @@ pub mod axum {
     pub use axum::*;
 }
 
-pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T> {
-    fn route<REST: RestType<I, O>>(self, rest: &REST) -> Router<BoxRoute>;
+pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
+    fn route(&self, handler: H) -> Router<BoxRoute>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
-    impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, F, R, E, $($param,)*> AxumHandler<I, O, ($($param,)*)> for F
+    impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H> 
+    for REST
     where
     R: Future<Output = Result<O, E>> + Send,
     E: IntoResponse + Send + 'static,
-    F: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
+    H: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
     $( $param: FromRequest + Send + 'static, )*
     {
-        fn route<REST: RestType<I, O>>(self, rest: &REST) -> Router<BoxRoute> {
-            let route = match rest.method() {
-                HttpMethod::DELETE => Router::new().route(rest.path(), delete(
+        fn route(&self, handler: H) -> Router<BoxRoute> {
+            let route = match self.method() {
+                HttpMethod::DELETE => Router::new().route(self.path(), delete(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(response::Json)
+                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
                 })).boxed(),
-                HttpMethod::GET => Router::new().route(rest.path(), get(
+                HttpMethod::GET => Router::new().route(self.path(), get(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(response::Json)
+                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
-                HttpMethod::POST => Router::new().route(rest.path(), post(
+                HttpMethod::POST => Router::new().route(self.path(), post(
                     |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(response::Json)
+                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
-                HttpMethod::PUT => Router::new().route(rest.path(), put(
+                HttpMethod::PUT => Router::new().route(self.path(), put(
                     |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(response::Json)
+                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
             };
 
@@ -63,21 +64,6 @@ factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
-pub trait AxumRoute<I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static>
-{
-    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute>;
-}
-
-impl<
-        I: Serialize + DeserializeOwned + Send + 'static,
-        O: Serialize + DeserializeOwned + Send + 'static,
-        REST: RestType<I, O>,
-    > AxumRoute<I, O> for REST
-{
-    fn route<T, H: AxumHandler<I, O, T>>(&self, handler: H) -> Router<BoxRoute> {
-        handler.route(self)
-    }
-}
 
 #[cfg(test)]
 mod tests {

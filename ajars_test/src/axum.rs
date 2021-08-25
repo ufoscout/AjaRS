@@ -9,7 +9,7 @@ use ajars::{
             response::IntoResponse,
             Router,
         },
-        AxumRoute,
+        AxumHandler,
     },
     RestType,
 };
