@@ -49,7 +49,7 @@ Let's now declare a client using [reqwest](https://github.com/seanmonstar/reqwes
 use ajars::reqwest::reqwest::ClientBuilder;
 use serde::{Deserialize, Serialize};
 
-pub async fn call() {
+pub async fn client() {
     let client = ClientBuilder::new().build().unwrap();
 
     let url = "http://127.0.0.1:8080/ping";            // Duplicated '/ping' path definition
