@@ -70,11 +70,11 @@ pub fn spawn_axum<REST: 'static + Clone + Send + RestType<Simple<String>, Simple
     // Start Server
     tokio::spawn(async move {
         let app = Router::new()
-            .or(echo_rest.route(echo))
-            .or(INFO_DELETE.route(info))
-            .or(INFO_GET.route(info))
-            .or(INFO_POST.route(info))
-            .or(INFO_PUT.route(info));
+            .or(echo_rest.to(echo))
+            .or(INFO_DELETE.to(info))
+            .or(INFO_GET.to(info))
+            .or(INFO_POST.to(info))
+            .or(INFO_PUT.to(info));
 
         let addr = SocketAddr::from(([127, 0, 0, 1], free_port));
 

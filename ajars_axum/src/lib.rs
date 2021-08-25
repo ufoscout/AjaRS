@@ -14,7 +14,7 @@ pub mod axum {
 }
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
-    fn route(&self, handler: H) -> Router<BoxRoute>;
+    fn to(&self, handler: H) -> Router<BoxRoute>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -27,7 +27,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     H: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
     $( $param: FromRequest + Send + 'static, )*
     {
-        fn route(&self, handler: H) -> Router<BoxRoute> {
+        fn to(&self, handler: H) -> Router<BoxRoute> {
             let route = match self.method() {
                 HttpMethod::DELETE => Router::new().route(self.path(), delete(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
@@ -119,7 +119,7 @@ mod tests {
         let rest =
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -152,7 +152,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -185,7 +185,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -218,7 +218,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.route(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -253,25 +253,25 @@ mod tests {
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
         // Accept 1 param
-        rest.route(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) });
+        rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) });
 
         // Accept 2 param
-        rest.route(|body: PingRequest, _: Extension<()>| async {
+        rest.to(|body: PingRequest, _: Extension<()>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 3 param
-        rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>| async {
+        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 4 param
-        rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>| async {
+        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 5 param
-        rest.route(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>, _: Request<Body>| async {
+        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>, _: Request<Body>| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
     }

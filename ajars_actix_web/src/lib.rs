@@ -13,7 +13,7 @@ pub mod actix_web {
 }
 
 pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
-    fn handle(&self, handler: H) -> Resource;
+    fn to(&self, handler: H) -> Resource;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -26,7 +26,7 @@ R: Future<Output = Result<O, E>> + 'static,
 E: ResponseError + 'static,
 $( $param: FromRequest + 'static, )*
 {
-    fn handle(&self, handler: H) -> Resource {
+    fn to(&self, handler: H) -> Resource {
         let resource = web::resource::<&str>(self.path());
 
         match self.method() {
@@ -109,7 +109,7 @@ mod tests {
         let rest =
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = test::init_service(App::new().service(rest.handle(ping))).await;
+        let app = test::init_service(App::new().service(rest.to(ping))).await;
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -131,7 +131,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = test::init_service(App::new().service(rest.handle(ping))).await;
+        let app = test::init_service(App::new().service(rest.to(ping))).await;
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -153,7 +153,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = test::init_service(App::new().service(rest.handle(ping))).await;
+        let app = test::init_service(App::new().service(rest.to(ping))).await;
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -175,7 +175,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = test::init_service(App::new().service(rest.handle(ping))).await;
+        let app = test::init_service(App::new().service(rest.to(ping))).await;
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 

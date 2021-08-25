@@ -29,8 +29,8 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .service(PING.handle(ping)) // This creates a GET /api/ping endpoint
-            .service(HELLO.handle(hello)) // This creates a POST /api/hello endpoint
+            .service(PING.to(ping)) // This creates a GET /api/ping endpoint
+            .service(HELLO.to(hello)) // This creates a POST /api/hello endpoint
     })
     .bind(("0.0.0.0", port))?
     .run()
