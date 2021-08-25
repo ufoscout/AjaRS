@@ -32,19 +32,19 @@ $( $param: FromRequest + 'static, )*
         match self.method() {
             HttpMethod::DELETE => resource.route(web::delete().to(
                 move |json: Query<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(Json))
             })),
             HttpMethod::GET => resource.route(web::get().to(
                 move |json: Query<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(Json))
             })),
             HttpMethod::POST => resource.route(web::post().to(
                 move |json: Json<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(Json))
             })),
             HttpMethod::PUT => resource.route(web::put().to(
                 move |json: Json<I>, $( $param: $param,)*| {
-                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(|res| Json(res)))
+                (handler)(json.into_inner(), $($param,)*).map(|res| res.map(Json))
             })),
         }
     }

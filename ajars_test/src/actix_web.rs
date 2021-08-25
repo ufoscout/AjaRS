@@ -66,7 +66,6 @@ pub fn spawn_actix_web<REST: 'static + Clone + Send + RestType<Simple<String>, S
                 .service(INFO_PUT.handle(info))
         })
         .bind(&address)
-        .and_then(|ser| Ok(ser))
         .unwrap()
         .run()
         .await

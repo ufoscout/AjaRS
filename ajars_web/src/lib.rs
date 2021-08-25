@@ -109,7 +109,7 @@ impl AjarsWeb {
         base_url: P,
         interceptor: Rc<dyn Interceptor>,
     ) -> Result<AjarsWeb, Error> {
-        let window = window().ok_or_else(|| Error::MissingWindow)?;
+        let window = window().ok_or(Error::MissingWindow)?;
         Ok(AjarsWeb { window, interceptor, base_url: base_url.into() })
     }
 
@@ -218,7 +218,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
             source: WebError(format!("{:?}", err)),
         })?;
 
-        let response = do_web_request(&self.window, request).await;
+        let response = do_web_request(self.window, request).await;
 
         let response = self.interceptor.after_response(response)?;
 
@@ -233,7 +233,7 @@ fn as_query_string<I: Serialize + DeserializeOwned>(
     data: &I,
 ) -> Result<(), Error> {
     opts.method(method);
-    uri.push_str("?");
+    uri.push('?');
     uri.push_str(&serde_urlencoded::to_string(data).map_err(|err| Error::Builder {
         context: "Failed to serialize data as query string".to_owned(),
         source: WebError(format!("{:?}", err)),

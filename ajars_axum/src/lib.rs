@@ -30,19 +30,19 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
             let route = match rest.method() {
                 HttpMethod::DELETE => Router::new().route(rest.path(), delete(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                        (self)(payload.0, $( $param,)*).await.map(response::Json)
                 })).boxed(),
                 HttpMethod::GET => Router::new().route(rest.path(), get(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                        (self)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
                 HttpMethod::POST => Router::new().route(rest.path(), post(
                     |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                        (self)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
                 HttpMethod::PUT => Router::new().route(rest.path(), put(
                     |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (self)(payload.0, $( $param,)*).await.map(|result| response::Json(result))
+                        (self)(payload.0, $( $param,)*).await.map(response::Json)
                     })).boxed(),
             };
 
