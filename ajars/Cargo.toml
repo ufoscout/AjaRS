@@ -21,6 +21,7 @@ ajars_surf = { path = "../ajars_surf", version = "0.5.0", optional = true }
 ajars_web = { path = "../ajars_web", version = "0.5.0", optional = true }
 
 [dev-dependencies]
+derive_more = "0.99"
 serde = "1"
 
 [features]

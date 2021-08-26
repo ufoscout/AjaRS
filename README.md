@@ -3,6 +3,7 @@
 A small [Rust](https://www.rust-lang.org) library to remove the duplicated code between the definition of a Server side REST endpoint 
 and the one of a REST Client that calls it.
 
+
 ## The problem
 When we create a REST endpoint, we need to provide at least four different values:
 1. The path of the resource
@@ -21,27 +22,23 @@ App::new().service(
 
     web::resource("/ping")  // PATH definition here
     
-    .route(web::post()     // HTTP Method definition here
+    .route(web::post()      // HTTP Method definition here
     
-    .to(ping)              // The signature of the `ping` fn determines the
-                        // JSON types produced and consumed. In this case
-                        // PingRequest and PingResponse
+    .to(ping)               // The signature of the `ping` fn determines the
+                            // JSON types produced and consumed. In this case
+                            // PingRequest and PingResponse
     )
 );
 
 async fn ping(_body: Json<PingRequest>) -> Result<Json<PingResponse>> {
-    Ok(Json(PingResponse { message: "PONG".to_owned() }))
+    Ok(Json(PingResponse {}))
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {
-    pub message: String,
-}
+pub struct PingRequest {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {
-    pub message: String,
-}
+pub struct PingResponse {}
 ```
 
 Let's now declare a client using [reqwest](https://github.com/seanmonstar/reqwest)
@@ -52,77 +49,99 @@ use serde::{Deserialize, Serialize};
 pub async fn client() {
     let client = ClientBuilder::new().build().unwrap();
 
-    let url = "http://127.0.0.1:8080/ping";            // Duplicated '/ping' path definition
+    let url = "http://127.0.0.1:8080/ping";    // Duplicated '/ping' path definition
     
-    client.post(url)                                   // Duplicated HTTP Post method definition
+    client.post(url)                           // Duplicated HTTP Post method definition
     
-    .json(&PingRequest { message: "PING".to_owned() }) // Duplicated request type. Not checked at compile time
+    .json(&PingRequest {})                     // Duplicated request type. Not checked at compile time
     
     .send().await.unwrap()
-    .json::<PingResponse>().await.unwrap();            // Duplicated response type. Not checked at compile time
+    .json::<PingResponse>().await.unwrap();    // Duplicated response type. Not checked at compile time
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {
-    pub message: String,
-}
+pub struct PingRequest {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {
-    pub message: String,
-}
+pub struct PingResponse {}
 ```
 
 Wouldn't it be good to have those values declared only once with all types checked at compile time?
 
+
 ## The AjaRs solution
 
-Ajars allows a single definition for those values. This removes code duplication and
-allows compile time verification that the endpoint server and client path, method, request type and response type are coherent.
+Ajars allows a single definition for both the client and server. This removes code duplication and, at the same time,
+allows compile time verification that the request and response types are correct.
 
-For example, the following is the Ajars definition of the previous endpoint, ideally declared in a commond library imported by both the server and the client:
+Let's now redefine the previous endpoint using Ajars: definition of the previous endpoint:
 ```rust
 use ajars::Rest;
+use serde::{Deserialize, Serialize};
 
 // This defines a 'POST' call with path /ping, request type 'PingRequest' and response type 'PingResponse'
+// This should ideally be declared in a commond library imported by both the server and the client
 pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
-```
 
-Now, using Ajars, the server side endpoint creation with actix-web becomes:
-```rust
-use ajars::actix_web::HandleActix;
 
-HttpServer::new(move || 
+// The the server side endpoint creation now becomes:
+fn server() {
+
+    use ajars::actix_web::ActixWebHandler;
+    use ajars::{actix_web::actix_web::{App, HttpServer, ResponseError}};
+    use derive_more::{Display, Error};
+
+    HttpServer::new(move || 
         App::new().service(
-            PING.handle(ping)
+            PING.to(ping) // here Ajarj takes care of the endpoint creation
         )
-    )
-    .bind("127.0.0.1:8080")
-    .unwrap()
-    .run()
-    .await
-    .unwrap();
-});
-```
+    );
 
-and the reqwest client becomes:
-```rust
-let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+    #[derive(Debug, Display, Error)]
+    enum UserError {
+        #[display(fmt = "Validation error on field: {}", field)]
+        ValidationError { field: String },
+    }
+    impl ResponseError for UserError {}
 
-// Performs a POST request to http://127.0.0.1:8080/ping
-// The PingRequest and PingResponse types are enforced at compile time
-let response = ajars
-    .request(&PING)
-    .send(&PingRequest { message: "Reqwest".to_owned() })
-    .await
-    .unwrap();
+    async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+        Ok(PingResponse {})
+    }
+
+    // start the server...
+
+}
+    
+// The client, using reqwest, becomes:
+async fn client() {
+    
+    use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
+
+    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+    
+    // Performs a POST request to http://127.0.0.1:8080/ping
+    // The PingRequest and PingResponse types are enforced at compile time
+    let response = ajars
+        .request(&PING)
+        .send(&PingRequest {})
+        .await
+        .unwrap();
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
 ```
 
 ## Supported clients
 
-### WASM in the browser
-Ajars provides a lightweight client implementation based on [web-sys](TODO), 
-this is to be used in WASM based web frontends that run in a browser (e.g. [Yew](TODO), [Sycamore](TODO), etc...).
+### WASM (web-sys) in the browser
+Ajars provides a lightweight client implementation based on [web-sys](https://github.com/rustwasm/wasm-bindgen), 
+this is to be used in WASM based web frontends that run in a browser (e.g. [Yew](https://github.com/yewstack/yew), 
+[Sycamore](https://github.com/sycamore-rs/sycamore), etc...).
 
 To use it enable the `web` feature, in the Cargo.toml file:
 ```toml
@@ -131,71 +150,117 @@ ajars = { version = "LAST_VERSION", features = ["web"] }
 
 Example:
 ```rust
-use ajars::web::{error::Error, AjarsWeb};
+use ajars::web::AjarsWeb;
+use ajars::Rest;
+use serde::{Deserialize, Serialize};
 
-let base_url = "";
-let ajars = AjarsWeb::new(base_url).expect("Should build Ajars");
+pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-let response = ajars
-    .request(&PING)
-    .send(&PingRequest { message: "Reqwest".to_owned() })
-    .await
-    .unwrap();
+async fn client() {
+
+    let ajars = AjarsWeb::new("").expect("Should build Ajars");
+    
+    let response = ajars
+        .request(&PING)           // <-- Here's everything required
+        .send(&PingRequest {})
+        .await
+        .unwrap();
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
 ```
 
 ### Reqwest
-To use it enable the `reqwest` feature, in the Cargo.toml file:
+To use it with [reqwest](https://github.com/seanmonstar/reqwest) enable the `reqwest` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["reqwest"] }
 ```
 
 Example:
 ```rust
-use ajars::reqwest::{reqwest::ClientBuilder, AjarsReqwest};
+use ajars::Rest;
+use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
+use serde::{Deserialize, Serialize};
 
-let base_url = "http://127.0.0.1:8080";
-let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), base_url);
+pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-let response = ajars
-    .request(&PING)
-    .send(&PingRequest { message: "Reqwest".to_owned() })
-    .await
-    .unwrap();
+async fn client() {
+
+    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+    
+    let response = ajars
+        .request(&PING)           // <-- Here's everything required
+        .send(&PingRequest {})
+        .await
+        .unwrap();
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
 ```
 
 ### Surf
-To use it enable the `surf` feature, in the Cargo.toml file:
+To use it with [surf](https://github.com/http-rs/surf) enable the `surf` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["surf"] }
 ```
 
 Example:
 ```rust
-use ajars::surf::{surf, AjarsSurf};
+use ajars::{Rest, surf::surf};
+use ajars::surf::AjarsSurf;
+use serde::{Deserialize, Serialize};
 
-let base_url = "http://127.0.0.1:8080";
-let ajars = AjarsSurf::new(surf::client(), base_url);
+pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-let response = ajars
-    .request(&PING)
-    .send(&PingRequest { message: "Reqwest".to_owned() })
-    .await
-    .unwrap();
+async fn client() {
+
+    let ajars = AjarsSurf::new(surf::client(), "http://127.0.0.1:8080");
+    
+    let response = ajars
+        .request(&PING)            // <-- Here's everything required
+        .send(&PingRequest { })
+        .await
+        .unwrap();
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
 ```
 
 ## Supported servers
 
 ### Actix-web
-To use it enable the `actix_web` feature, in the Cargo.toml file:
+To use with [actix-web](https://github.com/actix/actix-web) enable the `actix_web` feature, in the Cargo.toml file:
 ```toml
 ajars = { version = "LAST_VERSION", features = ["actix_web"] }
 ```
 
 Example:
 ```rust
-HttpServer::new(move || 
+use ajars::Rest;
+use serde::{Deserialize, Serialize};
+use ajars::actix_web::ActixWebHandler;
+use ajars::actix_web::actix_web::{App, HttpServer, ResponseError};
+use derive_more::{Display, Error};
+
+pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+
+async fn server() {
+
+    HttpServer::new(move || 
         App::new().service(
-            PING.handle(ping)
+            PING.to(ping)    // <-- Here's everything required
         )
     )
     .bind("127.0.0.1:8080")
@@ -203,8 +268,79 @@ HttpServer::new(move ||
     .run()
     .await
     .unwrap();
-});
+
+}
+
+#[derive(Debug, Display, Error)]
+enum UserError {
+    #[display(fmt = "Validation error on field: {}", field)]
+    ValidationError { field: String },
+}
+impl ResponseError for UserError {}
+
+async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+    Ok(PingResponse {})
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
 ```
 
-### Warp (Work In Progress)
-Not yet ready
+### Axum
+To use with [axum](https://github.com/tokio-rs/axum) enable the `axum` feature, in the Cargo.toml file:
+```toml
+ajars = { version = "LAST_VERSION", features = ["axum"] }
+```
+
+Example:
+```rust
+use ajars::Rest;
+use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
+use ajars::axum::AxumHandler;
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use derive_more::{Display, Error};
+
+pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+
+async fn server() {
+
+    let app = Router::new()
+            .or(PING.to(ping));  // <-- Here's everything required
+
+        let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+
+        println!("Start axum to {}", addr);
+
+        ajars::axum::axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+
+}
+
+#[derive(Debug, Display, Error)]
+enum UserError {
+    #[display(fmt = "Validation error on field: {}", field)]
+    ValidationError { field: String },
+}
+
+impl IntoResponse for UserError {
+    type Body = Body;
+    type BodyError = <Self::Body as HttpBody>::Error;
+
+    fn into_response(self) -> Response<Self::Body> {
+        Response::new(Body::empty())
+    }
+}
+
+async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+    Ok(PingResponse {})
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingRequest {}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PingResponse {}
+```
