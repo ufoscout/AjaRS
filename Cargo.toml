@@ -1,6 +1,6 @@
 [package]
 name = "ajars"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -14,12 +14,12 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars_actix_web = { path = "./ajars_actix_web", version = "0.6.1", optional = true }
-ajars_axum = { path = "./ajars_axum", version = "0.6.1", optional = true }
-ajars_core = { path = "./ajars_core", version = "0.6.1" }
-ajars_reqwest = { path = "./ajars_reqwest", version = "0.6.1", optional = true }
-ajars_surf = { path = "./ajars_surf", version = "0.6.1", optional = true }
-ajars_web = { path = "./ajars_web", version = "0.6.1", optional = true }
+ajars_actix_web = { path = "./ajars_actix_web", version = "0.6.2", optional = true }
+ajars_axum = { path = "./ajars_axum", version = "0.6.2", optional = true }
+ajars_core = { path = "./ajars_core", version = "0.6.2" }
+ajars_reqwest = { path = "./ajars_reqwest", version = "0.6.2", optional = true }
+ajars_surf = { path = "./ajars_surf", version = "0.6.2", optional = true }
+ajars_web = { path = "./ajars_web", version = "0.6.2", optional = true }
 
 [dev-dependencies]
 derive_more = "0.99"

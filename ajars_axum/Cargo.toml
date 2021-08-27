@@ -1,6 +1,6 @@
 [package]
 name = "ajars_axum"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -14,7 +14,7 @@ keywords = []
 
 [dependencies]
 axum = { version = "0.2", default-features = false }
-ajars_core = { path = "../ajars_core", version = "0.6.1" }
+ajars_core = { path = "../ajars_core", version = "0.6.2" }
 serde = { version = "1", default-features = false }
 
 [dev-dependencies]
