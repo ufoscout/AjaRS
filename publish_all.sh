@@ -10,7 +10,7 @@ declare -a publish_list=(
     "ajars_reqwest"
     "ajars_surf"
     "ajars_web"
-    "ajars"
+    "."
 )
 
 echo 'Attempt ''cargo check'' before publishing'
