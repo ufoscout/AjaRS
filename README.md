@@ -15,55 +15,52 @@ Exactly the same four values have to be provided when creating a REST client for
 
 For example, if we use [actix-web](https://github.com/actix/actix-web), an endpoint could be created with:
 ```rust
-use ajars::actix_web::actix_web::{App, Result, web::{self, Json}};
-use serde::{Deserialize, Serialize};
+#[cfg(all(feature = "actix_web", feature = "reqwest"))]
+mod without_ajars {
+    use ajars::actix_web::actix_web::{App, Result, web::{self, Json}};
+    use serde::{Deserialize, Serialize};
 
-App::new().service(
+    fn server() {
+        App::new().service(
 
-    web::resource("/ping")  // PATH definition here
-    
-    .route(web::post()      // HTTP Method definition here
-    
-    .to(ping)               // The signature of the `ping` fn determines the
-                            // JSON types produced and consumed. In this case
-                            // PingRequest and PingResponse
-    )
-);
+            web::resource("/ping")  // PATH definition here
+            
+            .route(web::post()      // HTTP Method definition here
+            
+            .to(ping)               // The signature of the `ping` fn determines the
+                                    // JSON types produced and consumed. In this case
+                                    // PingRequest and PingResponse
+            )
+        );
 
-async fn ping(_body: Json<PingRequest>) -> Result<Json<PingResponse>> {
-    Ok(Json(PingResponse {}))
+        async fn ping(_body: Json<PingRequest>) -> Result<Json<PingResponse>> {
+            Ok(Json(PingResponse {}))
+        }
+    }
+
+    // Let's now declare a client using [reqwest](https://github.com/seanmonstar/reqwest)
+    pub async fn client() {
+        
+        use ajars::reqwest::reqwest::ClientBuilder;
+        
+        let client = ClientBuilder::new().build().unwrap();
+
+        let url = "http://127.0.0.1:8080/ping";    // Duplicated '/ping' path definition
+        
+        client.post(url)                           // Duplicated HTTP Post method definition
+        
+        .json(&PingRequest {})                     // Duplicated request type. Not checked at compile time
+        
+        .send().await.unwrap()
+        .json::<PingResponse>().await.unwrap();    // Duplicated response type. Not checked at compile time
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
-```
-
-Let's now declare a client using [reqwest](https://github.com/seanmonstar/reqwest)
-```rust
-use ajars::reqwest::reqwest::ClientBuilder;
-use serde::{Deserialize, Serialize};
-
-pub async fn client() {
-    let client = ClientBuilder::new().build().unwrap();
-
-    let url = "http://127.0.0.1:8080/ping";    // Duplicated '/ping' path definition
-    
-    client.post(url)                           // Duplicated HTTP Post method definition
-    
-    .json(&PingRequest {})                     // Duplicated request type. Not checked at compile time
-    
-    .send().await.unwrap()
-    .json::<PingResponse>().await.unwrap();    // Duplicated response type. Not checked at compile time
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 Wouldn't it be good to have those values declared only once with all types checked at compile time?
@@ -76,64 +73,66 @@ allows compile time verification that the request and response types are correct
 
 Let's now redefine the previous endpoint using Ajars: definition of the previous endpoint:
 ```rust
-use ajars::Rest;
-use serde::{Deserialize, Serialize};
+#[cfg(all(feature = "actix_web", feature = "reqwest"))]
+mod with_ajars {
+    use ajars::Rest;
+    use serde::{Deserialize, Serialize};
 
-// This defines a 'POST' call with path /ping, request type 'PingRequest' and response type 'PingResponse'
-// This should ideally be declared in a commond library imported by both the server and the client
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    // This defines a 'POST' call with path /ping, request type 'PingRequest' and response type 'PingResponse'
+    // This should ideally be declared in a commond library imported by both the server and the client
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
 
-// The the server side endpoint creation now becomes:
-fn server() {
+    // The the server side endpoint creation now becomes:
+    fn server() {
 
-    use ajars::actix_web::ActixWebHandler;
-    use ajars::{actix_web::actix_web::{App, HttpServer, ResponseError}};
-    use derive_more::{Display, Error};
+        use ajars::actix_web::ActixWebHandler;
+        use ajars::{actix_web::actix_web::{App, HttpServer, ResponseError}};
+        use derive_more::{Display, Error};
 
-    HttpServer::new(move || 
-        App::new().service(
-            PING.to(ping) // here Ajarj takes care of the endpoint creation
-        )
-    );
+        HttpServer::new(move || 
+            App::new().service(
+                PING.to(ping) // here Ajarj takes care of the endpoint creation
+            )
+        );
 
-    #[derive(Debug, Display, Error)]
-    enum UserError {
-        #[display(fmt = "Validation error on field: {}", field)]
-        ValidationError { field: String },
+        #[derive(Debug, Display, Error)]
+        enum UserError {
+            #[display(fmt = "Validation error on field: {}", field)]
+            ValidationError { field: String },
+        }
+        impl ResponseError for UserError {}
+
+        async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+            Ok(PingResponse {})
+        }
+
+        // start the server...
+
     }
-    impl ResponseError for UserError {}
+        
+    // The client, using reqwest, becomes:
+    async fn client() {
+        
+        use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
 
-    async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
-        Ok(PingResponse {})
+        let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+        
+        // Performs a POST request to http://127.0.0.1:8080/ping
+        // The PingRequest and PingResponse types are enforced at compile time
+        let response = ajars
+            .request(&PING)
+            .send(&PingRequest {})
+            .await
+            .unwrap();
     }
 
-    // start the server...
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
 
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-    
-// The client, using reqwest, becomes:
-async fn client() {
-    
-    use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
-
-    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
-    
-    // Performs a POST request to http://127.0.0.1:8080/ping
-    // The PingRequest and PingResponse types are enforced at compile time
-    let response = ajars
-        .request(&PING)
-        .send(&PingRequest {})
-        .await
-        .unwrap();
-}
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 ## Supported clients
@@ -150,28 +149,31 @@ ajars = { version = "LAST_VERSION", features = ["web"] }
 
 Example:
 ```rust
-use ajars::web::AjarsWeb;
-use ajars::Rest;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "web")]
+mod web { 
+    use ajars::web::AjarsWeb;
+    use ajars::Rest;
+    use serde::{Deserialize, Serialize};
 
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-async fn client() {
+    async fn client() {
 
-    let ajars = AjarsWeb::new("").expect("Should build Ajars");
-    
-    let response = ajars
-        .request(&PING)           // <-- Here's everything required
-        .send(&PingRequest {})
-        .await
-        .unwrap();
+        let ajars = AjarsWeb::new("").expect("Should build Ajars");
+        
+        let response = ajars
+            .request(&PING)           // <-- Here's everything required
+            .send(&PingRequest {})
+            .await
+            .unwrap();
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 ### Reqwest
@@ -182,28 +184,31 @@ ajars = { version = "LAST_VERSION", features = ["reqwest"] }
 
 Example:
 ```rust
-use ajars::Rest;
-use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "reqwest")]
+mod reqwest { 
+    use ajars::Rest;
+    use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
+    use serde::{Deserialize, Serialize};
 
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-async fn client() {
+    async fn client() {
 
-    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
-    
-    let response = ajars
-        .request(&PING)           // <-- Here's everything required
-        .send(&PingRequest {})
-        .await
-        .unwrap();
+        let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+        
+        let response = ajars
+            .request(&PING)           // <-- Here's everything required
+            .send(&PingRequest {})
+            .await
+            .unwrap();
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 ### Surf
@@ -214,28 +219,31 @@ ajars = { version = "LAST_VERSION", features = ["surf"] }
 
 Example:
 ```rust
-use ajars::{Rest, surf::surf};
-use ajars::surf::AjarsSurf;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "surf")]
+mod surf { 
+    use ajars::Rest;
+    use ajars::surf::AjarsSurf;
+    use serde::{Deserialize, Serialize};
 
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-async fn client() {
+    async fn client() {
 
-    let ajars = AjarsSurf::new(surf::client(), "http://127.0.0.1:8080");
-    
-    let response = ajars
-        .request(&PING)            // <-- Here's everything required
-        .send(&PingRequest { })
-        .await
-        .unwrap();
+        let ajars = AjarsSurf::new(ajars::surf::surf::client(), "http://127.0.0.1:8080");
+        
+        let response = ajars
+            .request(&PING)            // <-- Here's everything required
+            .send(&PingRequest { })
+            .await
+            .unwrap();
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 ## Supported servers
@@ -248,45 +256,48 @@ ajars = { version = "LAST_VERSION", features = ["actix_web"] }
 
 Example:
 ```rust
-use ajars::Rest;
-use serde::{Deserialize, Serialize};
-use ajars::actix_web::ActixWebHandler;
-use ajars::actix_web::actix_web::{App, HttpServer, ResponseError};
-use derive_more::{Display, Error};
+#[cfg(feature = "actix_web")]
+mod actix_web { 
+    use ajars::Rest;
+    use serde::{Deserialize, Serialize};
+    use ajars::actix_web::ActixWebHandler;
+    use ajars::actix_web::actix_web::{App, HttpServer, ResponseError};
+    use derive_more::{Display, Error};
 
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-async fn server() {
+    async fn server() {
 
-    HttpServer::new(move || 
-        App::new().service(
-            PING.to(ping)    // <-- Here's everything required
+        HttpServer::new(move || 
+            App::new().service(
+                PING.to(ping)    // <-- Here's everything required
+            )
         )
-    )
-    .bind("127.0.0.1:8080")
-    .unwrap()
-    .run()
-    .await
-    .unwrap();
+        .bind("127.0.0.1:8080")
+        .unwrap()
+        .run()
+        .await
+        .unwrap();
 
+    }
+
+    #[derive(Debug, Display, Error)]
+    enum UserError {
+        #[display(fmt = "Validation error on field: {}", field)]
+        ValidationError { field: String },
+    }
+    impl ResponseError for UserError {}
+
+    async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+        Ok(PingResponse {})
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-#[derive(Debug, Display, Error)]
-enum UserError {
-    #[display(fmt = "Validation error on field: {}", field)]
-    ValidationError { field: String },
-}
-impl ResponseError for UserError {}
-
-async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
-    Ok(PingResponse {})
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```
 
 ### Axum
@@ -297,50 +308,53 @@ ajars = { version = "LAST_VERSION", features = ["axum"] }
 
 Example:
 ```rust
-use ajars::Rest;
-use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
-use ajars::axum::AxumHandler;
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use derive_more::{Display, Error};
+#[cfg(feature = "axum")]
+mod axum { 
+    use ajars::Rest;
+    use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
+    use ajars::axum::AxumHandler;
+    use serde::{Deserialize, Serialize};
+    use std::net::SocketAddr;
+    use derive_more::{Display, Error};
 
-pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
+    pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
-async fn server() {
+    async fn server() {
 
-    let app = Router::new()
-            .or(PING.to(ping));  // <-- Here's everything required
+        let app = Router::new()
+                .or(PING.to(ping));  // <-- Here's everything required
 
-        let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+            let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
 
-        println!("Start axum to {}", addr);
+            println!("Start axum to {}", addr);
 
-        ajars::axum::axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+            ajars::axum::axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 
-}
-
-#[derive(Debug, Display, Error)]
-enum UserError {
-    #[display(fmt = "Validation error on field: {}", field)]
-    ValidationError { field: String },
-}
-
-impl IntoResponse for UserError {
-    type Body = Body;
-    type BodyError = <Self::Body as HttpBody>::Error;
-
-    fn into_response(self) -> Response<Self::Body> {
-        Response::new(Body::empty())
     }
+
+    #[derive(Debug, Display, Error)]
+    enum UserError {
+        #[display(fmt = "Validation error on field: {}", field)]
+        ValidationError { field: String },
+    }
+
+    impl IntoResponse for UserError {
+        type Body = Body;
+        type BodyError = <Self::Body as HttpBody>::Error;
+
+        fn into_response(self) -> Response<Self::Body> {
+            Response::new(Body::empty())
+        }
+    }
+
+    async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
+        Ok(PingResponse {})
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingRequest {}
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct PingResponse {}
 }
-
-async fn ping(_body: PingRequest) -> Result<PingResponse, UserError> {
-    Ok(PingResponse {})
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingRequest {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PingResponse {}
 ```

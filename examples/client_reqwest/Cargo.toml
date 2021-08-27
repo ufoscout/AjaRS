@@ -6,6 +6,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars = { path = "../../ajars", features = ["reqwest"] }
+ajars = { path = "../..", features = ["reqwest"] }
 ajars_common = { path = "../ajars_common" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

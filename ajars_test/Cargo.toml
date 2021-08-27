@@ -13,7 +13,7 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars = { path = "../ajars", version = "0.6.0", features = ["actix_web", "axum", "reqwest", "surf"] }
+ajars = { path = "..", version = "0.6.0", features = ["actix_web", "axum", "reqwest", "surf"] }
 ajars_core = { path = "../ajars_core", version = "0.6.0" }
 actix-rt = "2"
 port_check = "0.1"
