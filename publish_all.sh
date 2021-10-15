@@ -20,10 +20,10 @@ echo 'Attempt ''cargo check --all-features'' before publishing'
 cargo check --all-features
 
 echo 'Attempt ''cargo test'' before publishing'
-cargo test
+cargo test --workspace
 
 echo 'Attempt ''cargo test --all-features'' before publishing'
-cargo test --all-features
+cargo test --workspace --all-features
 
 for i in "${publish_list[@]}"
 do
