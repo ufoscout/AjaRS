@@ -1,8 +1,8 @@
 use ::axum::{
+    routing::{delete, get, post, put},
     extract::{self, FromRequest},
-    handler::{delete, get, post, put},
-    response::{self, IntoResponse},
-    routing::BoxRoute,
+    response::{IntoResponse},
+    Json,
     Router,
 };
 use ajars_core::{HttpMethod, RestType};
@@ -14,7 +14,7 @@ pub mod axum {
 }
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
-    fn to(&self, handler: H) -> Router<BoxRoute>;
+    fn to(&self, handler: H) -> Router;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -27,24 +27,24 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     H: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
     $( $param: FromRequest + Send + 'static, )*
     {
-        fn to(&self, handler: H) -> Router<BoxRoute> {
+        fn to(&self, handler: H) -> Router {
             let route = match self.method() {
                 HttpMethod::DELETE => Router::new().route(self.path(), delete(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
-                })).boxed(),
+                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                })),
                 HttpMethod::GET => Router::new().route(self.path(), get(
                     |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
-                    })).boxed(),
+                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    })),
                 HttpMethod::POST => Router::new().route(self.path(), post(
-                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
-                    })).boxed(),
+                    |payload: Json<I>, $( $param: $param,)*| async move {
+                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    })),
                 HttpMethod::PUT => Router::new().route(self.path(), put(
-                    |payload: extract::Json<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(response::Json)
-                    })).boxed(),
+                    |payload: Json<I>, $( $param: $param,)*| async move {
+                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    })),
             };
 
             route
@@ -115,6 +115,7 @@ mod tests {
 
     #[tokio::test]
     async fn should_create_a_delete_endpoint() {
+
         // Arrange
         let rest =
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));

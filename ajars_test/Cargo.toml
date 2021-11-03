@@ -21,5 +21,6 @@ rand = "0.8"
 serde =  { version = "1.0", features = ["derive"] }
 surf_lib = { package = "surf", version = "2.2" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+axum = "0.3"
 
 [dev-dependencies]
