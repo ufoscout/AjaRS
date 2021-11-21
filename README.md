@@ -322,7 +322,7 @@ mod axum {
     async fn server() {
 
         let app = Router::new()
-                .or(PING.to(ping));  // <-- Here's everything required
+                .merge(PING.to(ping));  // <-- Here's everything required
 
             let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
 
