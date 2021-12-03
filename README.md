@@ -311,7 +311,7 @@ Example:
 #[cfg(feature = "axum")]
 mod axum { 
     use ajars::Rest;
-    use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
+    use ajars::axum::axum::{body::{boxed, Body, BoxBody, HttpBody}, http::Response, response::IntoResponse, Router};
     use ajars::axum::AxumHandler;
     use serde::{Deserialize, Serialize};
     use std::net::SocketAddr;
@@ -339,11 +339,8 @@ mod axum {
     }
 
     impl IntoResponse for UserError {
-        type Body = Body;
-        type BodyError = <Self::Body as HttpBody>::Error;
-
-        fn into_response(self) -> Response<Self::Body> {
-            Response::new(Body::empty())
+        fn into_response(self) -> Response<BoxBody> {
+            Response::new(boxed(Body::empty()))
         }
     }
 
