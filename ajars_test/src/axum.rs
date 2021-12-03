@@ -13,15 +13,14 @@ use ajars::{
     },
     RestType,
 };
+use ::axum::body::BoxBody;
 
 use crate::{api::*, error::MyError};
 
 impl IntoResponse for MyError {
-    type Body = Body;
-    type BodyError = <Self::Body as axum::body::HttpBody>::Error;
 
-    fn into_response(self) -> Response<Self::Body> {
-        Response::new(Body::empty())
+    fn into_response(self) -> Response<BoxBody> {
+        Response::new(axum::body::boxed(Body::empty()))
     }
 }
 

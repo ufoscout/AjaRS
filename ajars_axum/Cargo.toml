@@ -13,7 +13,7 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { git = "https://github.com/tokio-rs/axum", branch = "main", default-features = false, features = ["json"] }
+axum = { version = "0.4", default-features = false, features = ["json"] }
 ajars_core = { path = "../ajars_core", version = "0.6.3" }
 serde = { version = "1", default-features = false }
 

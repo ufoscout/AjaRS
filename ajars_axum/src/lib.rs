@@ -1,7 +1,8 @@
 use ::axum::{
+    body::Body,
     routing::{delete, get, post, put},
     extract::{self, FromRequest},
-    response::{IntoResponse},
+    response::IntoResponse,
     Json,
     Router,
 };
@@ -25,7 +26,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     R: Future<Output = Result<O, E>> + Send,
     E: IntoResponse + Send + 'static,
     H: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
-    $( $param: FromRequest + Send + 'static, )*
+    $( $param: FromRequest<Body> + Send + 'static, )*
     {
         fn to(&self, handler: H) -> Router {
             let route = match self.method() {
@@ -52,6 +53,40 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     }
 });
 
+    //
+    // MODEL FN USED FOR CREATING THE MACRO
+    //
+    // impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, P> AxumHandler<I, O, P, H> 
+    // for REST
+    // where
+    // R: Future<Output = Result<O, E>> + Send,
+    // E: IntoResponse + Send + 'static,
+    // H: 'static + Send + Sync + Clone + Fn(I, String) -> R,
+    // P: FromRequest<Body> + Send + 'static, 
+    // {
+    //     fn to(&self, handler: H) -> Router {
+    //         let route = match self.method() {
+    //             HttpMethod::DELETE => Router::new().route(self.path(), delete(
+    //                 |payload: extract::Query<I>, p: P| async move {
+    //                     (handler)(payload.0, p).await.map(Json)
+    //             })),
+    //             HttpMethod::GET => Router::new().route(self.path(), get(
+    //                 |payload: extract::Query<I>, p: P| async move {
+    //                     (handler)(payload.0, p).await.map(Json)
+    //                 })),
+    //             HttpMethod::POST => Router::new().route(self.path(), post(
+    //                 |payload: Json<I>, p: P| async move {
+    //                     (handler)(payload.0, p).await.map(Json)
+    //                 })),
+    //             HttpMethod::PUT => Router::new().route(self.path(), put(
+    //                 |payload: Json<I>, p: P| async move {
+    //                     (handler)(payload.0, p).await.map(Json)
+    //                 })),
+    //         };
+    //         route
+    //     }
+    // }
+
 factory_tuple! {}
 factory_tuple! { P0 }
 factory_tuple! { P0 P1 }
@@ -72,7 +107,7 @@ mod tests {
 
     use super::*;
     use ::axum::{
-        body::Body,
+        body::{Body, BoxBody},
         extract::Extension,
         http::{header, Method, Request, Response, StatusCode},
         AddExtensionLayer,
@@ -105,11 +140,8 @@ mod tests {
     }
 
     impl IntoResponse for ServerError {
-        type Body = axum::body::Body;
-        type BodyError = <Self::Body as axum::body::HttpBody>::Error;
-
-        fn into_response(self) -> Response<Self::Body> {
-            Response::new(Body::empty())
+        fn into_response(self) -> Response<BoxBody> {
+            Response::new(axum::body::boxed(Body::empty()))
         }
     }
 
@@ -276,4 +308,5 @@ mod tests {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
     }
+
 }

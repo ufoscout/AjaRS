@@ -9,4 +9,4 @@ edition = "2018"
 ajars = { path = "../..", features = ["surf"] }
 ajars_common = { path = "../ajars_common" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-surf = "2.2"
+surf = "2.3"
