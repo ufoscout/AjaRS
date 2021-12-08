@@ -4,6 +4,10 @@ use std::rc::Rc;
 use yew::{prelude::*, services::ConsoleService};
 use yewtil::future::LinkFuture;
 
+// Use `wee_alloc` as the global allocator.
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 enum Msg {
     PingSend,
     PingSetResponse(Result<PingResponse, Error>),

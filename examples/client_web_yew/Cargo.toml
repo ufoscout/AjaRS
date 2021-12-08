@@ -10,3 +10,16 @@ ajars = { path = "../..", features = ["web"] }
 ajars_common = { path = "../ajars_common" }
 yew = "0.18"
 yewtil = { version = "0.4", default-features = false, features = ["future"] }
+wee_alloc = "0.4.5"
+
+[profile.release]
+# less code to include into binary
+panic = 'abort' 
+# optimization over all codebase ( better optimization, slower build )
+codegen-units = 1
+# optimization for size ( more aggressive )
+opt-level = 'z' 
+# optimization for size 
+# opt-level = 's' 
+# link time optimization using using whole-program analysis
+lto = true
