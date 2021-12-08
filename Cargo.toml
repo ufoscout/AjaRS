@@ -44,9 +44,6 @@ members = [
     "ajars_reqwest",
     "ajars_surf",
     "ajars_web",
-    "examples/client_reqwest",
-    "examples/client_surf",
-    "examples/client_web_yew",
-    "examples/server_actix_web",
+    "examples/*",
 ] 
 

@@ -9,4 +9,4 @@ edition = "2018"
 actix-web = { version = "4.0.0-beta.12", default-features = false }
 ajars = { path = "../..", features = ["actix_web"] }
 ajars_common = { path = "../ajars_common" }
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }

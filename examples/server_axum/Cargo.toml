@@ -1,0 +1,13 @@
+[package]
+name = "server_axum"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.4"
+ajars = { path = "../..", features = ["axum"] }
+ajars_common = { path = "../ajars_common" }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
