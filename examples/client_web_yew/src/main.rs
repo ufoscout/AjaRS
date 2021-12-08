@@ -1,5 +1,5 @@
 use ajars::web::{error::Error, AjarsWeb};
-use ajars_common::ping::{PingRequest, PingResponse, PING};
+use examples_common::ping::{PingRequest, PingResponse, PING};
 use std::rc::Rc;
 use yew::{prelude::*, services::ConsoleService};
 use yewtil::future::LinkFuture;

@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 ajars = { path = "../..", features = ["web"] }
-ajars_common = { path = "../ajars_common" }
+examples_common = { path = "../examples_common" }
 yew = "0.18"
 yewtil = { version = "0.4", default-features = false, features = ["future"] }
 wee_alloc = "0.4.5"

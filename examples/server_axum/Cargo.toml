@@ -8,6 +8,6 @@ edition = "2018"
 [dependencies]
 axum = "0.4"
 ajars = { path = "../..", features = ["axum"] }
-ajars_common = { path = "../ajars_common" }
+examples_common = { path = "../examples_common" }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

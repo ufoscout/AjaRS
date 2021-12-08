@@ -1,5 +1,5 @@
 [package]
-name = "ajars_common"
+name = "examples_common"
 version = "0.1.0"
 edition = "2018"
 

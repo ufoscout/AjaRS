@@ -1,5 +1,5 @@
 use ajars::surf::{surf, AjarsSurf};
-use ajars_common::{
+use examples_common::{
     hello::{HelloRequest, HELLO},
     ping::{PingRequest, PING},
 };

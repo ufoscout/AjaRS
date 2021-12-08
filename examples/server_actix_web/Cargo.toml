@@ -8,5 +8,5 @@ edition = "2018"
 [dependencies]
 actix-web = { version = "4.0.0-beta.12", default-features = false }
 ajars = { path = "../..", features = ["actix_web"] }
-ajars_common = { path = "../ajars_common" }
+examples_common = { path = "../examples_common" }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }

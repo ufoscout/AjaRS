@@ -1,4 +1,4 @@
-use ajars_common::{hello::*, ping::*};
+use examples_common::{hello::*, ping::*};
 use ajars::axum::AxumHandler;
 use axum::{response::IntoResponse, http::{Uri, Method, Response}, body::{BoxBody, Body}, Router};
 use chrono::Local;
