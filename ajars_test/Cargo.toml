@@ -1,6 +1,6 @@
 [package]
 name = "ajars_test"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -13,8 +13,8 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars = { path = "..", version = "0.7.0", features = ["actix_web", "axum", "reqwest", "surf"] }
-ajars_core = { path = "../ajars_core", version = "0.7.0" }
+ajars = { path = "..", version = "0.8.0", features = ["actix_web", "axum", "reqwest", "surf"] }
+ajars_core = { path = "../ajars_core", version = "0.8.0" }
 actix-rt = "2"
 axum = { version = "0.5", default-features = false, features = ["json"] }
 port_check = "0.1"
