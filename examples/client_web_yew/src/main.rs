@@ -1,7 +1,7 @@
 use ajars::web::{error::Error, AjarsWeb};
 use examples_common::ping::{PingRequest, PingResponse, PING};
 use std::rc::Rc;
-use yew::{prelude::*};
+use yew::prelude::*;
 
 // Use `wee_alloc` as the global allocator.
 #[global_allocator]
