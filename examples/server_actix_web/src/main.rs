@@ -1,7 +1,7 @@
 use actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use ajars::actix_web::ActixWebHandler;
-use examples_common::{hello::*, ping::*};
 use chrono::Local;
+use examples_common::{hello::*, ping::*};
 use std::fmt::Display;
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time

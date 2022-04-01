@@ -15,7 +15,7 @@ keywords = []
 [dependencies]
 ajars_core = { path = "../ajars_core", version = "0.7.0" }
 serde = { version = "1", default-features = false }
-serde-wasm-bindgen = "0.3"
+serde-wasm-bindgen = "0.4"
 serde_urlencoded = "0.7"
 thiserror = "1"
 

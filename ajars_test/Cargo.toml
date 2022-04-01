@@ -16,7 +16,7 @@ keywords = []
 ajars = { path = "..", version = "0.7.0", features = ["actix_web", "axum", "reqwest", "surf"] }
 ajars_core = { path = "../ajars_core", version = "0.7.0" }
 actix-rt = "2"
-axum = { version = "0.4", default-features = false, features = ["json"] }
+axum = { version = "0.5", default-features = false, features = ["json"] }
 port_check = "0.1"
 rand = "0.8"
 serde =  { version = "1.0", features = ["derive"] }

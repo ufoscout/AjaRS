@@ -1,7 +1,12 @@
-use examples_common::{hello::*, ping::*};
 use ajars::axum::AxumHandler;
-use axum::{response::IntoResponse, http::{Uri, Method, Response}, body::{BoxBody, Body}, Router};
+use axum::{
+    body::{Body, BoxBody},
+    http::{Method, Response, Uri},
+    response::IntoResponse,
+    Router,
+};
 use chrono::Local;
+use examples_common::{hello::*, ping::*};
 use std::{fmt::Display, net::SocketAddr};
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time
@@ -27,16 +32,13 @@ async fn main() {
     let port = 8080;
     println!("Starting actix server at port {}", port);
 
-    let app = Router::new()
-        .merge(PING.to(ping))
-        .merge(HELLO.to(hello));
+    let app = Router::new().merge(PING.to(ping)).merge(HELLO.to(hello));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     println!("Start axum to {}", addr);
 
     axum::Server::bind(&addr).serve(app.into_make_service()).await.expect("Axum server should start");
-
 }
 
 #[derive(Debug, Clone)]
@@ -49,7 +51,6 @@ impl Display for ServerError {
 }
 
 impl IntoResponse for ServerError {
-
     fn into_response(self) -> Response<BoxBody> {
         Response::new(axum::body::boxed(Body::empty()))
     }

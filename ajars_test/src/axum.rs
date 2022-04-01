@@ -1,5 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 
+use ::axum::body::BoxBody;
 use ajars::{
     axum::{
         axum::{
@@ -13,12 +14,10 @@ use ajars::{
     },
     RestType,
 };
-use ::axum::body::BoxBody;
 
 use crate::{api::*, error::MyError};
 
 impl IntoResponse for MyError {
-
     fn into_response(self) -> Response<BoxBody> {
         Response::new(axum::body::boxed(Body::empty()))
     }

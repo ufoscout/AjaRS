@@ -1,10 +1,9 @@
 use ::axum::{
     body::Body,
-    routing::{delete, get, post, put},
     extract::{self, FromRequest},
     response::IntoResponse,
-    Json,
-    Router,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
@@ -20,7 +19,7 @@ pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + Deserializ
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
-    impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H> 
+    impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H>
     for REST
     where
     R: Future<Output = Result<O, E>> + Send,
@@ -53,39 +52,39 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     }
 });
 
-    //
-    // MODEL FN USED FOR CREATING THE MACRO
-    //
-    // impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, P> AxumHandler<I, O, P, H> 
-    // for REST
-    // where
-    // R: Future<Output = Result<O, E>> + Send,
-    // E: IntoResponse + Send + 'static,
-    // H: 'static + Send + Sync + Clone + Fn(I, String) -> R,
-    // P: FromRequest<Body> + Send + 'static, 
-    // {
-    //     fn to(&self, handler: H) -> Router {
-    //         let route = match self.method() {
-    //             HttpMethod::DELETE => Router::new().route(self.path(), delete(
-    //                 |payload: extract::Query<I>, p: P| async move {
-    //                     (handler)(payload.0, p).await.map(Json)
-    //             })),
-    //             HttpMethod::GET => Router::new().route(self.path(), get(
-    //                 |payload: extract::Query<I>, p: P| async move {
-    //                     (handler)(payload.0, p).await.map(Json)
-    //                 })),
-    //             HttpMethod::POST => Router::new().route(self.path(), post(
-    //                 |payload: Json<I>, p: P| async move {
-    //                     (handler)(payload.0, p).await.map(Json)
-    //                 })),
-    //             HttpMethod::PUT => Router::new().route(self.path(), put(
-    //                 |payload: Json<I>, p: P| async move {
-    //                     (handler)(payload.0, p).await.map(Json)
-    //                 })),
-    //         };
-    //         route
-    //     }
-    // }
+//
+// MODEL FN USED FOR CREATING THE MACRO
+//
+// impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, P> AxumHandler<I, O, P, H>
+// for REST
+// where
+// R: Future<Output = Result<O, E>> + Send,
+// E: IntoResponse + Send + 'static,
+// H: 'static + Send + Sync + Clone + Fn(I, String) -> R,
+// P: FromRequest<Body> + Send + 'static,
+// {
+//     fn to(&self, handler: H) -> Router {
+//         let route = match self.method() {
+//             HttpMethod::DELETE => Router::new().route(self.path(), delete(
+//                 |payload: extract::Query<I>, p: P| async move {
+//                     (handler)(payload.0, p).await.map(Json)
+//             })),
+//             HttpMethod::GET => Router::new().route(self.path(), get(
+//                 |payload: extract::Query<I>, p: P| async move {
+//                     (handler)(payload.0, p).await.map(Json)
+//                 })),
+//             HttpMethod::POST => Router::new().route(self.path(), post(
+//                 |payload: Json<I>, p: P| async move {
+//                     (handler)(payload.0, p).await.map(Json)
+//                 })),
+//             HttpMethod::PUT => Router::new().route(self.path(), put(
+//                 |payload: Json<I>, p: P| async move {
+//                     (handler)(payload.0, p).await.map(Json)
+//                 })),
+//         };
+//         route
+//     }
+// }
 
 factory_tuple! {}
 factory_tuple! { P0 }
@@ -99,7 +98,6 @@ factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 }
 factory_tuple! { P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -110,7 +108,6 @@ mod tests {
         body::{Body, BoxBody},
         extract::Extension,
         http::{header, Method, Request, Response, StatusCode},
-        AddExtensionLayer,
     };
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
@@ -147,12 +144,11 @@ mod tests {
 
     #[tokio::test]
     async fn should_create_a_delete_endpoint() {
-
         // Arrange
         let rest =
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(Extension(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -185,7 +181,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(Extension(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -218,7 +214,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(Extension(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -251,7 +247,7 @@ mod tests {
         // Arrange
         let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.to(ping).layer(AddExtensionLayer::new(()));
+        let app = rest.to(ping).layer(Extension(()));
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -308,5 +304,4 @@ mod tests {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
     }
-
 }
