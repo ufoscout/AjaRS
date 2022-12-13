@@ -1,6 +1,6 @@
 [package]
 name = "ajars_axum"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -13,8 +13,8 @@ keywords = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.5", default-features = false, features = ["json", "query"] }
-ajars_core = { path = "../ajars_core", version = "0.8.0" }
+axum = { version = "0.6", default-features = false, features = ["json", "query"] }
+ajars_core = { path = "../ajars_core", version = "0.9.0" }
 serde = { version = "1", default-features = false }
 
 [dev-dependencies]

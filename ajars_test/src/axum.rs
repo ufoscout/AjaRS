@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 
-use ::axum::body::BoxBody;
+use ::axum::{body::BoxBody, extract::State};
 use ajars::{
     axum::{
         axum::{
@@ -23,7 +23,7 @@ impl IntoResponse for MyError {
     }
 }
 
-async fn echo(body: Simple<String>, uri: http::Uri, method: http::Method) -> Result<Simple<String>, MyError> {
+async fn echo(uri: http::Uri, method: http::Method, body: Simple<String>) -> Result<Simple<String>, MyError> {
     println!("echo - Request path: {:?}", uri.path());
     println!("echo - Request method: {:?}", method);
     println!("echo - Request query_string: {:?}", uri.query());
@@ -32,10 +32,11 @@ async fn echo(body: Simple<String>, uri: http::Uri, method: http::Method) -> Res
 }
 
 async fn info(
-    body: InfoRequest<String>,
+    _: State<()>,
     uri: http::Uri,
     method: http::Method,
     headers: http::HeaderMap,
+    body: InfoRequest<String>,
 ) -> Result<InfoResponse<String>, MyError> {
     println!("echo - Request path: {:?}", uri.path());
     println!("echo - Request method: {:?}", method);

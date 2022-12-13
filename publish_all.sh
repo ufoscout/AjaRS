@@ -3,6 +3,8 @@
 ## exit if something fails
 set -e
 
+./test_all.sh
+
 declare -a publish_list=(
     "ajars_core"
     "ajars_actix_web"
@@ -12,18 +14,6 @@ declare -a publish_list=(
     "ajars_web"
     "."
 )
-
-echo 'Attempt ''cargo check'' before publishing'
-cargo check
-
-echo 'Attempt ''cargo check --all-features'' before publishing'
-cargo check --all-features
-
-echo 'Attempt ''cargo test'' before publishing'
-cargo test --workspace
-
-echo 'Attempt ''cargo test --all-features'' before publishing'
-cargo test --workspace --all-features
 
 for i in "${publish_list[@]}"
 do

@@ -8,7 +8,7 @@ edition = "2018"
 [dependencies]
 ajars = { path = "../..", features = ["web"] }
 examples_common = { path = "../examples_common" }
-yew = "0.19"
+yew = { version = "0.20", features = ["csr"] }
 wee_alloc = "0.4.5"
 
 [profile.release]

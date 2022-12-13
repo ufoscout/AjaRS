@@ -1,6 +1,6 @@
 use ::axum::{
     body::Body,
-    extract::{self, FromRequest},
+    extract::{self, FromRequestParts},
     response::IntoResponse,
     routing::{delete, get, post, put},
     Json, Router,
@@ -13,37 +13,40 @@ pub mod axum {
     pub use axum::*;
 }
 
-pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
-    fn to(&self, handler: H) -> Router;
+pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H, S> {
+    fn to(&self, handler: H) -> Router<S, Body>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
-    impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H>
+    impl <I, O, H, R, E, S, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H, S>
     for REST
     where
+    I: Serialize + DeserializeOwned + Send + 'static,
+    O: Serialize + DeserializeOwned + Send + 'static,
     R: Future<Output = Result<O, E>> + Send,
     E: IntoResponse + Send + 'static,
-    H: 'static + Send + Sync + Clone + Fn(I, $($param,)*) -> R,
-    $( $param: FromRequest<Body> + Send + 'static, )*
+    S: Clone + Send + Sync + 'static,
+    H: 'static + Send + Sync + Clone + Fn($($param,)* I) -> R,
+    $( $param: FromRequestParts<S> + Send + 'static, )*
     {
-        fn to(&self, handler: H) -> Router {
+        fn to(&self, handler: H) -> Router<S, Body> {
             let route = match self.method() {
                 HttpMethod::DELETE => Router::new().route(self.path(), delete(
-                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    |$( $param: $param,)* payload: extract::Query<I>| async move {
+                        (handler)($( $param,)* payload.0).await.map(Json)
                 })),
                 HttpMethod::GET => Router::new().route(self.path(), get(
-                    |payload: extract::Query<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    |$( $param: $param,)* payload: extract::Query<I>| async move {
+                        (handler)($( $param,)* payload.0).await.map(Json)
                     })),
                 HttpMethod::POST => Router::new().route(self.path(), post(
-                    |payload: Json<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    |$( $param: $param,)* payload: Json<I>| async move {
+                        (handler)($( $param,)* payload.0).await.map(Json)
                     })),
                 HttpMethod::PUT => Router::new().route(self.path(), put(
-                    |payload: Json<I>, $( $param: $param,)*| async move {
-                        (handler)(payload.0, $( $param,)*).await.map(Json)
+                    |$( $param: $param,)* payload: Json<I>| async move {
+                        (handler)($( $param,)* payload.0).await.map(Json)
                     })),
             };
 
@@ -55,31 +58,34 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
 //
 // MODEL FN USED FOR CREATING THE MACRO
 //
-// impl <I: Serialize + DeserializeOwned + Send + 'static, O: Serialize + DeserializeOwned + Send + 'static, H, R, E, REST: RestType<I, O>, P> AxumHandler<I, O, P, H>
+// impl <I, O, H, R, E, S, REST: RestType<I, O>, P> AxumHandler<I, O, P, H, S>
 // for REST
 // where
+// I: Serialize + DeserializeOwned + Send + 'static,
+// O: Serialize + DeserializeOwned + Send + 'static,
 // R: Future<Output = Result<O, E>> + Send,
 // E: IntoResponse + Send + 'static,
-// H: 'static + Send + Sync + Clone + Fn(I, String) -> R,
-// P: FromRequest<Body> + Send + 'static,
+// H: 'static + Send + Sync + Clone + Fn(P, I) -> R,
+// S: Clone + Send + Sync + 'static,
+// P: FromRequestParts<S> + Send + 'static,
 // {
-//     fn to(&self, handler: H) -> Router {
+//     fn to(&self, handler: H) -> Router<S, Body> {
 //         let route = match self.method() {
 //             HttpMethod::DELETE => Router::new().route(self.path(), delete(
-//                 |payload: extract::Query<I>, p: P| async move {
-//                     (handler)(payload.0, p).await.map(Json)
+//                 |p: P, payload: extract::Query<I>| async move {
+//                     (handler)(p, payload.0).await.map(Json)
 //             })),
 //             HttpMethod::GET => Router::new().route(self.path(), get(
-//                 |payload: extract::Query<I>, p: P| async move {
-//                     (handler)(payload.0, p).await.map(Json)
+//                 |p: P, payload: extract::Query<I>| async move {
+//                     (handler)(p, payload.0).await.map(Json)
 //                 })),
 //             HttpMethod::POST => Router::new().route(self.path(), post(
-//                 |payload: Json<I>, p: P| async move {
-//                     (handler)(payload.0, p).await.map(Json)
+//                 |p: P, payload: extract::Json<I>| async move {
+//                     (handler)(p, payload.0).await.map(Json)
 //                 })),
 //             HttpMethod::PUT => Router::new().route(self.path(), put(
-//                 |payload: Json<I>, p: P| async move {
-//                     (handler)(payload.0, p).await.map(Json)
+//                 |p: P, payload: extract::Json<I>| async move {
+//                     (handler)(p, payload.0).await.map(Json)
 //                 })),
 //         };
 //         route
@@ -106,7 +112,7 @@ mod tests {
     use super::*;
     use ::axum::{
         body::{Body, BoxBody},
-        extract::Extension,
+        extract::{Extension, Query, State},
         http::{header, Method, Request, Response, StatusCode},
     };
     use ajars_core::RestFluent;
@@ -123,7 +129,7 @@ mod tests {
         pub message: String,
     }
 
-    async fn ping(body: PingRequest, _data: Extension<()>) -> Result<PingResponse, ServerError> {
+    async fn ping(_data: State<()>, body: PingRequest) -> Result<PingResponse, ServerError> {
         Ok(PingResponse { message: body.message })
     }
 
@@ -148,7 +154,7 @@ mod tests {
         let rest =
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
-        let app = rest.to(ping).layer(Extension(()));
+        let app = rest.to(ping).with_state(());
 
         let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
 
@@ -282,25 +288,26 @@ mod tests {
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
         // Accept 1 param
-        rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) });
+        rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) })
+            .with_state::<()>(());
 
         // Accept 2 param
-        rest.to(|body: PingRequest, _: Extension<()>| async {
+        rest.to(|_: State<()>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 3 param
-        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>| async {
+        rest.to(|_: State<String>, _: Query<String>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 4 param
-        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>| async {
+        rest.to(|_: State<()>, _: Query<String>, _: Query<usize>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 5 param
-        rest.to(|body: PingRequest, _: Extension<()>, _: Request<Body>, _: Request<Body>, _: Request<Body>| async {
+        rest.to(|_: State<()>, _: Query<String>, _: Query<u64>, _: Query<()>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
     }

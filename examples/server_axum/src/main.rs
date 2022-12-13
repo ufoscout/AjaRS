@@ -10,7 +10,7 @@ use examples_common::{hello::*, ping::*};
 use std::{fmt::Display, net::SocketAddr};
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time
-async fn ping(body: PingRequest, uri: Uri, method: Method) -> Result<PingResponse, ServerError> {
+async fn ping(uri: Uri, method: Method, body: PingRequest) -> Result<PingResponse, ServerError> {
     println!("echo - Request path: {:?}", uri.path());
     println!("echo - Request method: {:?}", method);
     println!("echo - Request query_string: {:?}", uri.query());
@@ -19,7 +19,7 @@ async fn ping(body: PingRequest, uri: Uri, method: Method) -> Result<PingRespons
 }
 
 /// The body type `HelloRequest` and the result type `HelloResponse` are enforded at compile time
-async fn hello(body: HelloRequest, uri: Uri, method: Method) -> Result<HelloResponse, ServerError> {
+async fn hello(uri: Uri, method: Method, body: HelloRequest) -> Result<HelloResponse, ServerError> {
     println!("echo - Request path: {:?}", uri.path());
     println!("echo - Request method: {:?}", method);
     println!("echo - Request query_string: {:?}", uri.query());

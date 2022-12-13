@@ -1,6 +1,6 @@
 [package]
 name = "ajars_actix_web"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -14,7 +14,7 @@ keywords = []
 
 [dependencies]
 actix-web = { version = "4.0", default-features = false }
-ajars_core = { path = "../ajars_core", version = "0.8.0" }
+ajars_core = { path = "../ajars_core", version = "0.9.0" }
 futures-util = "0.3"
 serde = { version = "1", default-features = false }
 
