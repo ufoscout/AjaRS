@@ -1,26 +1,27 @@
 [package]
 name = "ajars_test"
-version = "0.9.0"
-edition = "2018"
-license = "MIT"
-authors = ["Francesco Cina <ufoscout@gmail.com>"]
-description = "AjaRS"
-readme = "../README.md"
-homepage = "https://github.com/ufoscout/AjaRS"
-repository = "https://github.com/ufoscout/AjaRS"
-keywords = []
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+documentation.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars = { path = "..", version = "0.9.0", features = ["actix_web", "axum", "reqwest", "surf"] }
-ajars_core = { path = "../ajars_core", version = "0.9.0" }
+ajars = { workspace = true, features = ["actix_web", "axum", "reqwest", "surf"] }
+ajars_core = { workspace = true }
 actix-rt = "2"
-axum = { version = "0.6", default-features = false, features = ["json"] }
-port_check = "0.1"
-rand = "0.8"
-serde =  { version = "1.0", features = ["derive"] }
-surf_lib = { package = "surf", version = "2.2" }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+axum = { workspace = true }
+port_check = { workspace = true }
+rand = { workspace = true }
+serde =  { workspace = true, features = ["derive"] }
+surf = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [dev-dependencies]

@@ -5,7 +5,7 @@ use ajars_core::{HttpMethod, RestType};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod surf {
-    pub use surf::*;
+    pub use ::surf::*;
 }
 
 #[derive(Clone)]

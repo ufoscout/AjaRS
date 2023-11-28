@@ -10,7 +10,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::future::Future;
 
 pub mod axum {
-    pub use axum::*;
+    pub use ::axum::*;
 }
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H, S> {

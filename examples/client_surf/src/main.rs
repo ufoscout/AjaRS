@@ -6,7 +6,7 @@ use examples_common::{
 
 #[tokio::main]
 async fn main() {
-    let ajars = AjarsSurf::new(surf::client(), "http://127.0.0.1:8080".to_owned());
+    let ajars = AjarsSurf::new(surf::Client::new(), "http://127.0.0.1:8080".to_owned());
 
     // PING
     {

@@ -7,7 +7,7 @@ use http::HeaderMap;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod reqwest {
-    pub use reqwest::*;
+    pub use ::reqwest::*;
 }
 
 #[derive(Clone)]

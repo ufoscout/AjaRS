@@ -1,26 +1,27 @@
 [package]
 name = "ajars_axum"
-version = "0.9.0"
-edition = "2018"
-license = "MIT"
-authors = ["Francesco Cina <ufoscout@gmail.com>"]
-description = "AjaRS"
-readme = "../README.md"
-homepage = "https://github.com/ufoscout/AjaRS"
-repository = "https://github.com/ufoscout/AjaRS"
-keywords = []
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+documentation.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.6", default-features = false, features = ["json", "query"] }
-ajars_core = { path = "../ajars_core", version = "0.9.0" }
-serde = { version = "1", default-features = false }
+axum = { workspace = true }
+ajars_core = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
-hyper = "0.14"
-rand = "0.8"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tower = "0.4"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+hyper = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tower = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

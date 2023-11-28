@@ -1,30 +1,30 @@
 [package]
 name = "ajars_web"
-version = "0.9.0"
-edition = "2018"
-license = "MIT"
-authors = ["Francesco Cina <ufoscout@gmail.com>"]
-description = "AjaRS"
-readme = "../README.md"
-homepage = "https://github.com/ufoscout/AjaRS"
-repository = "https://github.com/ufoscout/AjaRS"
-keywords = []
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+documentation.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars_core = { path = "../ajars_core", version = "0.9.0" }
-serde = { version = "1", default-features = false }
-serde-wasm-bindgen = "0.4"
-serde_urlencoded = "0.7"
-thiserror = "1"
-gloo-net = { version = "0.2", default-features = false, features = ["http", "json"] }
-wasm-bindgen = { version = "0.2", default-features = false }
-wasm-bindgen-futures = { version = "0.4", default-features = false }
+ajars_core = { workspace = true }
+serde = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+serde_urlencoded = { workspace = true }
+thiserror = { workspace = true }
+gloo-net = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
 
 [dependencies.web-sys]
-version = "0.3"
-default-features = false
+workspace = true
 features = [
   'Headers',
   'Request',
@@ -35,4 +35,4 @@ features = [
 ]
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = "0.3"
+wasm-bindgen-test = { workspace = true }

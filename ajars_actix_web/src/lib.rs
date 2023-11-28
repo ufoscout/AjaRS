@@ -9,7 +9,7 @@ use futures_util::future::FutureExt;
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod actix_web {
-    pub use actix_web::*;
+    pub use ::actix_web::*;
 }
 
 pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {

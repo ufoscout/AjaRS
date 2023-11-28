@@ -1,11 +1,12 @@
 [package]
 name = "client_reqwest"
-version = "0.1.0"
-edition = "2018"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars = { path = "../..", features = ["reqwest"] }
-examples_common = { path = "../examples_common" }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+ajars = { workspace = true, features = ["reqwest"] }
+examples_common = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

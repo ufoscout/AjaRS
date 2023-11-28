@@ -1,18 +1,19 @@
 [package]
 name = "ajars_surf"
-version = "0.9.0"
-edition = "2018"
-license = "MIT"
-authors = ["Francesco Cina <ufoscout@gmail.com>"]
-description = "AjaRS"
-readme = "../README.md"
-homepage = "https://github.com/ufoscout/AjaRS"
-repository = "https://github.com/ufoscout/AjaRS"
-keywords = []
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+documentation.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars_core = { path = "../ajars_core", version = "0.9.0" }
-serde = {version = "1", default-features = false }
-surf = { version = "2.3", default-features = false }
+ajars_core = { workspace = true }
+serde = { workspace = true }
+surf = { workspace = true }

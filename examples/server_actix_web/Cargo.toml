@@ -1,12 +1,13 @@
 [package]
 name = "server_actix_web"
-version = "0.1.0"
-edition = "2018"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = { version = "4.0" }
-ajars = { path = "../..", features = ["actix_web"] }
-examples_common = { path = "../examples_common" }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
+actix-web = { workspace = true }
+ajars = { workspace = true, features = ["actix_web"] }
+examples_common = { workspace = true }
+chrono = { workspace = true, features = ["clock"] }
