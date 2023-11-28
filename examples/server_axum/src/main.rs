@@ -2,13 +2,14 @@ use std::fmt::Display;
 use std::net::SocketAddr;
 
 use ajars::axum::AxumHandler;
-use axum::body::{Body, BoxBody};
+use axum::body::Body;
 use axum::http::{Method, Response, Uri};
 use axum::response::IntoResponse;
 use axum::Router;
 use chrono::Local;
 use examples_common::hello::*;
 use examples_common::ping::*;
+use tokio::net::TcpListener;
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time
 async fn ping(uri: Uri, method: Method, body: PingRequest) -> Result<PingResponse, ServerError> {
@@ -38,8 +39,8 @@ async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     println!("Start axum to {}", addr);
-
-    axum::Server::bind(&addr).serve(app.into_make_service()).await.expect("Axum server should start");
+    let listener = TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, app.into_make_service()).await.expect("Axum server should start");
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +53,7 @@ impl Display for ServerError {
 }
 
 impl IntoResponse for ServerError {
-    fn into_response(self) -> Response<BoxBody> {
-        Response::new(axum::body::boxed(Body::empty()))
+    fn into_response(self) -> Response<Body> {
+        Response::new(Body::empty())
     }
 }

@@ -25,6 +25,7 @@ ajars_client_web = { workspace = true, optional = true }
 derive_more = { workspace = true }
 serde = { workspace = true }
 surf = { workspace = true }
+tokio = { workspace = true }
 
 [features]
 actix_web = ["ajars_server_actix_web"]
@@ -51,7 +52,7 @@ resolver = "2"
 
 [workspace.package]
 version = "0.10.0"
-edition = "2018"
+edition = "2021"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
 description = "AjaRS"
@@ -97,8 +98,8 @@ wasm-bindgen-test = { version = "0.3", default-features = false }
 web-sys ={ version = "0.3", default-features = false }
 
 # Ajax Server Axum
-axum = { version = "0.6", features = ["json", "query"] }
-hyper = "0.14"
+axum = { version = "0.7", features = ["json", "query"] }
+http-body-util = "0.1.0"
 tower = "0.4"
 
 # Ajax Server Actix Web

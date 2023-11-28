@@ -1,6 +1,5 @@
 use std::future::Future;
 
-use ::axum::body::Body;
 use ::axum::extract::{self, FromRequestParts};
 use ::axum::response::IntoResponse;
 use ::axum::routing::{delete, get, post, put};
@@ -14,7 +13,7 @@ pub mod axum {
 }
 
 pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H, S> {
-    fn to(&self, handler: H) -> Router<S, Body>;
+    fn to(&self, handler: H) -> Router<S>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -30,7 +29,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
     H: 'static + Send + Sync + Clone + Fn($($param,)* I) -> R,
     $( $param: FromRequestParts<S> + Send + 'static, )*
     {
-        fn to(&self, handler: H) -> Router<S, Body> {
+        fn to(&self, handler: H) -> Router<S> {
             let route = match self.method() {
                 HttpMethod::DELETE => Router::new().route(self.path(), delete(
                     |$( $param: $param,)* payload: extract::Query<I>| async move {
@@ -69,7 +68,7 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
 // S: Clone + Send + Sync + 'static,
 // P: FromRequestParts<S> + Send + 'static,
 // {
-//     fn to(&self, handler: H) -> Router<S, Body> {
+//     fn to(&self, handler: H) -> Router<S> {
 //         let route = match self.method() {
 //             HttpMethod::DELETE => Router::new().route(self.path(), delete(
 //                 |p: P, payload: extract::Query<I>| async move {
@@ -109,14 +108,15 @@ mod tests {
 
     use std::fmt::Display;
 
-    use ::axum::body::{Body, BoxBody};
+    use ::axum::body::Body;
     use ::axum::extract::{Extension, Query, State};
     use ::axum::http::{header, Method, Request, Response, StatusCode};
+    use http_body_util::BodyExt; // for `collect`
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
-    use tower::ServiceExt;
+    use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
-    use super::*; // for `app.oneshot()`
+    use super::*;
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct PingRequest {
@@ -142,8 +142,8 @@ mod tests {
     }
 
     impl IntoResponse for ServerError {
-        fn into_response(self) -> Response<BoxBody> {
-            Response::new(axum::body::boxed(Body::empty()))
+        fn into_response(self) -> Response<Body> {
+            Response::new(Body::empty())
         }
     }
 
@@ -174,7 +174,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
         // Assert
@@ -207,7 +207,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
         // Assert
@@ -240,7 +240,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
         // Assert
@@ -273,7 +273,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!("application/json", response.headers().get(header::CONTENT_TYPE).unwrap().to_str().unwrap());
 
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let body: PingResponse = serde_json::from_slice(&body).unwrap();
 
         // Assert

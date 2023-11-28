@@ -316,11 +316,12 @@ Example:
 #[cfg(feature = "axum")]
 mod axum { 
     use ajars::Rest;
-    use ajars::axum::axum::{body::{boxed, Body, BoxBody, HttpBody}, http::Response, response::IntoResponse, Router};
+    use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
     use ajars::axum::AxumHandler;
     use serde::{Deserialize, Serialize};
     use std::net::SocketAddr;
     use derive_more::{Display, Error};
+    use tokio::net::TcpListener;
 
     pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
@@ -333,7 +334,8 @@ mod axum {
 
             println!("Start axum to {}", addr);
 
-            ajars::axum::axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+            let listener = TcpListener::bind(&addr).await.unwrap();
+            ajars::axum::axum::serve(listener, app.into_make_service()).await.unwrap();
 
     }
 
@@ -344,8 +346,8 @@ mod axum {
     }
 
     impl IntoResponse for UserError {
-        fn into_response(self) -> Response<BoxBody> {
-            Response::new(boxed(Body::empty()))
+        fn into_response(self) -> Response<Body> {
+            Response::new(Body::empty())
         }
     }
 

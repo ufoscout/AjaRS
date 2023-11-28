@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 
-use ::axum::body::BoxBody;
 use ::axum::extract::State;
 use ajars::axum::axum::body::Body;
 use ajars::axum::axum::http::{self, Response};
@@ -9,13 +8,14 @@ use ajars::axum::axum::response::IntoResponse;
 use ajars::axum::axum::{self, Router};
 use ajars::axum::AxumHandler;
 use ajars::RestType;
+use tokio::net::TcpListener;
 
 use crate::api::*;
 use crate::error::MyError;
 
 impl IntoResponse for MyError {
-    fn into_response(self) -> Response<BoxBody> {
-        Response::new(axum::body::boxed(Body::empty()))
+    fn into_response(self) -> Response<Body> {
+        Response::new(Body::empty())
     }
 }
 
@@ -75,7 +75,8 @@ pub fn spawn_axum<REST: 'static + Clone + Send + RestType<Simple<String>, Simple
 
         println!("Start axum to {}", addr);
 
-        axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+        let listener = TcpListener::bind(&addr).await.unwrap();
+        axum::serve(listener, app.into_make_service()).await.unwrap();
     });
     free_port
 }
