@@ -3,7 +3,7 @@
 ## exit if something fails
 set -e
 
-./test_all.sh
+./scripts/test.sh
 
 declare -a publish_list=(
     "ajars_core"
