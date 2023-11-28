@@ -15,6 +15,6 @@ keywords.workspace = true
 
 [dependencies]
 ajars_core = { workspace = true }
-http = { workspace = true }
-reqwest = { workspace = true }
+http = { workspace = true, default-features = false }
+reqwest = { workspace = true, default-features = false }
 serde = { workspace = true }

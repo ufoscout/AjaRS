@@ -14,7 +14,7 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { workspace = true }
+axum = { workspace = true, default-features = false }
 ajars_core = { workspace = true }
 serde = { workspace = true }
 

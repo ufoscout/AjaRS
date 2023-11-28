@@ -288,26 +288,26 @@ mod tests {
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
         // Accept 1 param
-        rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) })
+        let _ = rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) })
             .with_state::<()>(());
 
         // Accept 2 param
-        rest.to(|_: State<()>, body: PingRequest| async {
+        let _ = rest.to(|_: State<()>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 3 param
-        rest.to(|_: State<String>, _: Query<String>, body: PingRequest| async {
+        let _ = rest.to(|_: State<String>, _: Query<String>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 4 param
-        rest.to(|_: State<()>, _: Query<String>, _: Query<usize>, body: PingRequest| async {
+        let _ = rest.to(|_: State<()>, _: Query<String>, _: Query<usize>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
 
         // Accept 5 param
-        rest.to(|_: State<()>, _: Query<String>, _: Query<u64>, _: Query<()>, body: PingRequest| async {
+        let _ = rest.to(|_: State<()>, _: Query<String>, _: Query<u64>, _: Query<()>, body: PingRequest| async {
             Result::<_, ServerError>::Ok(PingResponse { message: body.message })
         });
     }
