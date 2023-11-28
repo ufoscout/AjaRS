@@ -1,11 +1,11 @@
 use ajars::reqwest::reqwest::ClientBuilder;
-use ajars::reqwest::AjarsReqwest;
+use ajars::reqwest::AjarsClientReqwest;
 use examples_common::hello::{HelloRequest, HELLO};
 use examples_common::ping::{PingRequest, PING};
 
 #[tokio::main]
 async fn main() {
-    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080".to_owned());
+    let ajars = AjarsClientReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080".to_owned());
 
     // PING
     {
