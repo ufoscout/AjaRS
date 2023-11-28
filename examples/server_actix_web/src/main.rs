@@ -1,8 +1,10 @@
+use std::fmt::Display;
+
 use actix_web::{App, HttpRequest, HttpServer, ResponseError};
 use ajars::actix_web::ActixWebHandler;
 use chrono::Local;
-use examples_common::{hello::*, ping::*};
-use std::fmt::Display;
+use examples_common::hello::*;
+use examples_common::ping::*;
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time
 async fn ping(body: PingRequest, request: HttpRequest) -> Result<PingResponse, ServerError> {

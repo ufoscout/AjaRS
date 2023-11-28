@@ -1,21 +1,17 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::collections::HashMap;
+use std::net::SocketAddr;
 
-use ::axum::{body::BoxBody, extract::State};
-use ajars::{
-    axum::{
-        axum::{
-            self,
-            body::Body,
-            http::{self, Response},
-            response::IntoResponse,
-            Router,
-        },
-        AxumHandler,
-    },
-    RestType,
-};
+use ::axum::body::BoxBody;
+use ::axum::extract::State;
+use ajars::axum::axum::body::Body;
+use ajars::axum::axum::http::{self, Response};
+use ajars::axum::axum::response::IntoResponse;
+use ajars::axum::axum::{self, Router};
+use ajars::axum::AxumHandler;
+use ajars::RestType;
 
-use crate::{api::*, error::MyError};
+use crate::api::*;
+use crate::error::MyError;
 
 impl IntoResponse for MyError {
     fn into_response(self) -> Response<BoxBody> {

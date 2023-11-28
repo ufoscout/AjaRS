@@ -1,10 +1,10 @@
-use ajars_test::api::Simple;
-use ajars_test::axum::spawn_axum;
 use std::time::Duration;
-use tokio::time::sleep;
 
 use ajars::surf::AjarsSurf;
 use ajars::RestFluent;
+use ajars_test::api::Simple;
+use ajars_test::axum::spawn_axum;
+use tokio::time::sleep;
 
 #[actix_rt::test]
 async fn test_surf_rest() {

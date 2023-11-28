@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
 use actix_rt::spawn;
-use ajars::{
-    actix_web::{
-        actix_web::{web::Data, App, HttpRequest, HttpServer, ResponseError},
-        ActixWebHandler,
-    },
-    RestType,
-};
+use ajars::actix_web::actix_web::web::Data;
+use ajars::actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
+use ajars::actix_web::ActixWebHandler;
+use ajars::RestType;
 
-use crate::{api::*, error::MyError};
+use crate::api::*;
+use crate::error::MyError;
 
 impl ResponseError for MyError {}
 

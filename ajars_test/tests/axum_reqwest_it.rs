@@ -1,12 +1,11 @@
+use std::time::Duration;
+
+use ajars::reqwest::reqwest::ClientBuilder;
+use ajars::reqwest::AjarsReqwest;
+use ajars::{Rest, RestFluent, RestType};
 use ajars_test::api::Simple;
 use ajars_test::axum::spawn_axum;
-use std::time::Duration;
 use tokio::time::sleep;
-
-use ajars::{
-    reqwest::{reqwest::ClientBuilder, AjarsReqwest},
-    Rest, RestFluent, RestType,
-};
 
 #[actix_rt::test]
 async fn test_reqwest_rest() {

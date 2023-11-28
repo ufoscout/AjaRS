@@ -1,8 +1,7 @@
-use ajars::reqwest::{reqwest::ClientBuilder, AjarsReqwest};
-use examples_common::{
-    hello::{HelloRequest, HELLO},
-    ping::{PingRequest, PING},
-};
+use ajars::reqwest::reqwest::ClientBuilder;
+use ajars::reqwest::AjarsReqwest;
+use examples_common::hello::{HelloRequest, HELLO};
+use examples_common::ping::{PingRequest, PING};
 
 #[tokio::main]
 async fn main() {

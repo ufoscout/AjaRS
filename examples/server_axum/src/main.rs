@@ -1,13 +1,14 @@
+use std::fmt::Display;
+use std::net::SocketAddr;
+
 use ajars::axum::AxumHandler;
-use axum::{
-    body::{Body, BoxBody},
-    http::{Method, Response, Uri},
-    response::IntoResponse,
-    Router,
-};
+use axum::body::{Body, BoxBody};
+use axum::http::{Method, Response, Uri};
+use axum::response::IntoResponse;
+use axum::Router;
 use chrono::Local;
-use examples_common::{hello::*, ping::*};
-use std::{fmt::Display, net::SocketAddr};
+use examples_common::hello::*;
+use examples_common::ping::*;
 
 /// The body type `PingRequest` and the result type `PingResult` are enforded at compile time
 async fn ping(uri: Uri, method: Method, body: PingRequest) -> Result<PingResponse, ServerError> {

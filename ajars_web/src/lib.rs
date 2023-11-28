@@ -3,23 +3,13 @@ use std::fmt::Display;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-use ajars_core::HttpMethod;
-use ajars_core::RestType;
-
+use ajars_core::{HttpMethod, RestType};
+use error::Error;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen_futures::JsFuture;
-
-use web_sys::window;
-use web_sys::Headers;
-use web_sys::Request as WebRequest;
-use web_sys::RequestInit;
-use web_sys::RequestMode;
-use web_sys::Response as WebResponse;
-use web_sys::Window;
-
-use error::Error;
+use web_sys::{window, Headers, Request as WebRequest, RequestInit, RequestMode, Response as WebResponse, Window};
 
 use crate::error::WebError;
 

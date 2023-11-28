@@ -1,10 +1,13 @@
-use std::{convert::TryFrom, marker::PhantomData};
+use std::convert::TryFrom;
+use std::marker::PhantomData;
 
-use crate::reqwest::{Client, RequestBuilder as ReqwestRequestBuilder};
 use ::reqwest::header::{HeaderName, HeaderValue};
 use ajars_core::{HttpMethod, RestType};
 use http::HeaderMap;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+
+use crate::reqwest::{Client, RequestBuilder as ReqwestRequestBuilder};
 
 pub mod reqwest {
     pub use ::reqwest::*;

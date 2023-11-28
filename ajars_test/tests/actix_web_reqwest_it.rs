@@ -1,12 +1,11 @@
-use actix_rt::time::sleep;
-use ajars_test::actix_web::spawn_actix_web;
-use ajars_test::api::Simple;
 use std::time::Duration;
 
-use ajars::{
-    reqwest::{reqwest::ClientBuilder, AjarsReqwest},
-    Rest, RestFluent, RestType,
-};
+use actix_rt::time::sleep;
+use ajars::reqwest::reqwest::ClientBuilder;
+use ajars::reqwest::AjarsReqwest;
+use ajars::{Rest, RestFluent, RestType};
+use ajars_test::actix_web::spawn_actix_web;
+use ajars_test::api::Simple;
 
 #[actix_rt::test]
 async fn test_reqwest_rest() {

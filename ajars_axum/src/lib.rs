@@ -1,13 +1,13 @@
-use ::axum::{
-    body::Body,
-    extract::{self, FromRequestParts},
-    response::IntoResponse,
-    routing::{delete, get, post, put},
-    Json, Router,
-};
-use ajars_core::{HttpMethod, RestType};
-use serde::{de::DeserializeOwned, Serialize};
 use std::future::Future;
+
+use ::axum::body::Body;
+use ::axum::extract::{self, FromRequestParts};
+use ::axum::response::IntoResponse;
+use ::axum::routing::{delete, get, post, put};
+use ::axum::{Json, Router};
+use ajars_core::{HttpMethod, RestType};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 pub mod axum {
     pub use ::axum::*;
@@ -109,15 +109,14 @@ mod tests {
 
     use std::fmt::Display;
 
-    use super::*;
-    use ::axum::{
-        body::{Body, BoxBody},
-        extract::{Extension, Query, State},
-        http::{header, Method, Request, Response, StatusCode},
-    };
+    use ::axum::body::{Body, BoxBody};
+    use ::axum::extract::{Extension, Query, State};
+    use ::axum::http::{header, Method, Request, Response, StatusCode};
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
-    use tower::ServiceExt; // for `app.oneshot()`
+    use tower::ServiceExt;
+
+    use super::*; // for `app.oneshot()`
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct PingRequest {
@@ -288,7 +287,8 @@ mod tests {
             RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
 
         // Accept 1 param
-        let _ = rest.to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) })
+        let _ = rest
+            .to(|body: PingRequest| async { Result::<_, ServerError>::Ok(PingResponse { message: body.message }) })
             .with_state::<()>(());
 
         // Accept 2 param

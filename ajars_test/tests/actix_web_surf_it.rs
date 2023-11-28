@@ -1,10 +1,10 @@
+use std::time::Duration;
+
 use actix_rt::time::sleep;
+use ajars::surf::AjarsSurf;
 use ajars::RestFluent;
 use ajars_test::actix_web::spawn_actix_web;
 use ajars_test::api::Simple;
-use std::time::Duration;
-
-use ajars::surf::AjarsSurf;
 
 #[actix_rt::test]
 async fn test_surf_rest() {
