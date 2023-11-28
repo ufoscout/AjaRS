@@ -111,8 +111,8 @@ mod tests {
     use ::axum::body::Body;
     use ::axum::extract::{Extension, Query, State};
     use ::axum::http::{header, Method, Request, Response, StatusCode};
-    use http_body_util::BodyExt; // for `collect`
     use ajars_core::RestFluent;
+    use http_body_util::BodyExt; // for `collect`
     use serde::{Deserialize, Serialize};
     use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
