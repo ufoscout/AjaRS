@@ -204,7 +204,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         let (uri, opts) = self.interceptor.before_request(uri, opts)?;
 
         let request = WebRequest::new_with_str_and_init(&uri, &opts).map_err(|err| Error::Builder {
-            context: format!("Failed to create request for {}", uri.to_string()),
+            context: format!("Failed to create request for {}", uri),
             source: WebError(format!("{:?}", err)),
         })?;
 
