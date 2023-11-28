@@ -1,5 +1,5 @@
 [package]
-name = "ajars_reqwest"
+name = "ajars_server_axum"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,7 +14,14 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum = { workspace = true, default-features = false }
 ajars_core = { workspace = true }
-http = { workspace = true, default-features = false }
-reqwest = { workspace = true, default-features = false }
 serde = { workspace = true }
+
+[dev-dependencies]
+hyper = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tower = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

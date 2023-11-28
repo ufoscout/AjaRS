@@ -1,5 +1,5 @@
 [package]
-name = "ajars_web"
+name = "ajars_client_web"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

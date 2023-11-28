@@ -14,12 +14,12 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ajars_actix_web = { workspace = true, optional = true }
-ajars_axum = { workspace = true, optional = true }
+ajars_server_actix_web = { workspace = true, optional = true }
+ajars_server_axum = { workspace = true, optional = true }
 ajars_core = { workspace = true }
-ajars_reqwest = { workspace = true, optional = true }
-ajars_surf = { workspace = true, optional = true }
-ajars_web = { workspace = true, optional = true }
+ajars_client_reqwest = { workspace = true, optional = true }
+ajars_client_surf = { workspace = true, optional = true }
+ajars_client_web = { workspace = true, optional = true }
 
 [dev-dependencies]
 derive_more = { workspace = true }
@@ -27,30 +27,30 @@ serde = { workspace = true }
 surf = { workspace = true }
 
 [features]
-actix_web = ["ajars_actix_web"]
-axum = ["ajars_axum"]
-reqwest = ["ajars_reqwest"]
-surf = ["ajars_surf"]
-web = ["ajars_web"]
+actix_web = ["ajars_server_actix_web"]
+axum = ["ajars_server_axum"]
+reqwest = ["ajars_client_reqwest"]
+surf = ["ajars_client_surf"]
+web = ["ajars_client_web"]
 
 
 [workspace]
 
 members = [
     "ajars_core",
+    "ajars_client_reqwest",
+    "ajars_client_surf",
+    "ajars_client_web",
+    "ajars_server_actix_web",
+    "ajars_server_axum",
     "ajars_test",
-    "ajars_actix_web",
-    "ajars_axum",
-    "ajars_reqwest",
-    "ajars_surf",
-    "ajars_web",
     "examples/*",
 ] 
 
 resolver = "2"
 
 [workspace.package]
-version = "0.9.0"
+version = "0.10.0"
 edition = "2018"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -62,14 +62,14 @@ documentation = "https://docs.rs/ajars"
 keywords = []
 
 [workspace.dependencies]
-ajars = { path = ".", version = "0.9.0" }
-ajars_actix_web = { path = "./ajars_actix_web", version = "0.9.0" }
-ajars_axum = { path = "./ajars_axum", version = "0.9.0" }
-ajars_core = { path = "./ajars_core", version = "0.9.0" }
-ajars_reqwest = { path = "./ajars_reqwest", version = "0.9.0" }
-ajars_surf = { path = "./ajars_surf", version = "0.9.0" }
-ajars_web = { path = "./ajars_web", version = "0.9.0" }
-examples_common = { path = "./examples/examples_common", version = "0.9.0" }
+ajars = { path = ".", version = "0.10.0" }
+ajars_server_actix_web = { path = "./ajars_server_actix_web", version = "0.10.0" }
+ajars_server_axum = { path = "./ajars_server_axum", version = "0.10.0" }
+ajars_core = { path = "./ajars_core", version = "0.10.0" }
+ajars_client_reqwest = { path = "./ajars_client_reqwest", version = "0.10.0" }
+ajars_client_surf = { path = "./ajars_client_surf", version = "0.10.0" }
+ajars_client_web = { path = "./ajars_client_web", version = "0.10.0" }
+examples_common = { path = "./examples/examples_common", version = "0.10.0" }
 
 chrono = { version = "0.4", default-features = false }
 derive_more = "0.99"

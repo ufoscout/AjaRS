@@ -1,5 +1,5 @@
 [package]
-name = "ajars_axum"
+name = "ajars_client_surf"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,14 +14,6 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { workspace = true, default-features = false }
 ajars_core = { workspace = true }
 serde = { workspace = true }
-
-[dev-dependencies]
-hyper = { workspace = true }
-rand = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-tower = { workspace = true }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+surf = { workspace = true, default-features = false }

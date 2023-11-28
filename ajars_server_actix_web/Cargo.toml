@@ -1,5 +1,5 @@
 [package]
-name = "ajars_surf"
+name = "ajars_server_actix_web"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,5 +15,11 @@ keywords.workspace = true
 
 [dependencies]
 ajars_core = { workspace = true }
+
+actix-web = { workspace = true, default-features = false}
+futures-util = { workspace = true }
 serde = { workspace = true }
-surf = { workspace = true, default-features = false }
+
+[dev-dependencies]
+actix-rt = { workspace = true }
+rand = { workspace = true }

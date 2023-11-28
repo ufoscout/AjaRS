@@ -1,5 +1,5 @@
 [package]
-name = "ajars_actix_web"
+name = "ajars_client_reqwest"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,11 +15,6 @@ keywords.workspace = true
 
 [dependencies]
 ajars_core = { workspace = true }
-
-actix-web = { workspace = true, default-features = false}
-futures-util = { workspace = true }
+http = { workspace = true, default-features = false }
+reqwest = { workspace = true, default-features = false }
 serde = { workspace = true }
-
-[dev-dependencies]
-actix-rt = { workspace = true }
-rand = { workspace = true }

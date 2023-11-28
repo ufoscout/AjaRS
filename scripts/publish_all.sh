@@ -7,11 +7,11 @@ set -e
 
 declare -a publish_list=(
     "ajars_core"
-    "ajars_actix_web"
-    "ajars_axum"
-    "ajars_reqwest"
-    "ajars_surf"
-    "ajars_web"
+    "ajars_server_actix_web"
+    "ajars_server_axum"
+    "ajars_client_reqwest"
+    "ajars_client_surf"
+    "ajars_client_web"
     "."
 )
 
