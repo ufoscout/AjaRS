@@ -84,23 +84,23 @@ pub struct DoNothingInterceptor {}
 
 impl Interceptor for DoNothingInterceptor {}
 
-pub struct AjarsWeb {
+pub struct AjarsClientWeb {
     window: Window,
     interceptor: Rc<dyn Interceptor>,
     base_url: String,
 }
 
-impl AjarsWeb {
-    pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsWeb, Error> {
-        AjarsWeb::new_with_interceptor(base_url, Rc::new(DoNothingInterceptor {}))
+impl AjarsClientWeb {
+    pub fn new<P: Into<String>>(base_url: P) -> Result<AjarsClientWeb, Error> {
+        AjarsClientWeb::new_with_interceptor(base_url, Rc::new(DoNothingInterceptor {}))
     }
 
     pub fn new_with_interceptor<P: Into<String>>(
         base_url: P,
         interceptor: Rc<dyn Interceptor>,
-    ) -> Result<AjarsWeb, Error> {
+    ) -> Result<AjarsClientWeb, Error> {
         let window = window().ok_or(Error::MissingWindow)?;
-        Ok(AjarsWeb { window, interceptor, base_url: base_url.into() })
+        Ok(AjarsClientWeb { window, interceptor, base_url: base_url.into() })
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(

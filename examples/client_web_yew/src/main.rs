@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use ajars::web::error::Error;
-use ajars::web::AjarsWeb;
+use ajars::web::AjarsClientWeb;
 use examples_common::ping::{PingRequest, PingResponse, PING};
 use yew::prelude::*;
 
@@ -15,7 +15,7 @@ enum Msg {
 }
 
 struct Model {
-    ajars: Rc<AjarsWeb>,
+    ajars: Rc<AjarsClientWeb>,
     ping_response: String,
 }
 
@@ -25,7 +25,7 @@ impl Component for Model {
 
     fn create(_ctx: &Context<Self>) -> Self {
         // This should be created at application level and shared across all components and services
-        let ajars = { Rc::new(AjarsWeb::new("http://127.0.0.1:3000").expect("Should build Ajars")) };
+        let ajars = { Rc::new(AjarsClientWeb::new("http://127.0.0.1:3000").expect("Should build Ajars")) };
 
         Self { ajars, ping_response: "".to_owned() }
     }

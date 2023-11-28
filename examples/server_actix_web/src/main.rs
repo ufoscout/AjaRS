@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use actix_web::{App, HttpRequest, HttpServer, ResponseError};
-use ajars::actix_web::ActixWebHandler;
+use ajars::actix_web::AjarsServerActixWebHandler;
 use chrono::Local;
 use examples_common::hello::*;
 use examples_common::ping::*;

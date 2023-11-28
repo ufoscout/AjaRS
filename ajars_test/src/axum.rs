@@ -6,7 +6,7 @@ use ajars::axum::axum::body::Body;
 use ajars::axum::axum::http::{self, Response};
 use ajars::axum::axum::response::IntoResponse;
 use ajars::axum::axum::{self, Router};
-use ajars::axum::AxumHandler;
+use ajars::axum::AjarsServerAxumHandler;
 use ajars::RestType;
 use tokio::net::TcpListener;
 

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use actix_rt::time::sleep;
-use ajars::surf::AjarsSurf;
+use ajars::surf::AjarsClientSurf;
 use ajars::RestFluent;
 use ajars_test::actix_web::spawn_actix_web;
 use ajars_test::api::Simple;
@@ -28,7 +28,7 @@ async fn perform_surf_call(rest: &RestFluent<Simple<String>, Simple<String>>) {
     sleep(Duration::from_millis(200)).await;
 
     // Start client
-    let req = AjarsSurf::new(ajars::surf::surf::client(), format!("http://127.0.0.1:{}", port));
+    let req = AjarsClientSurf::new(ajars::surf::surf::client(), format!("http://127.0.0.1:{}", port));
 
     let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 

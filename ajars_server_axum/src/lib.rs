@@ -12,13 +12,13 @@ pub mod axum {
     pub use ::axum::*;
 }
 
-pub trait AxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H, S> {
+pub trait AjarsServerAxumHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H, S> {
     fn to(&self, handler: H) -> Router<S>;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
-    impl <I, O, H, R, E, S, REST: RestType<I, O>, $($param,)*> AxumHandler<I, O, ($($param,)*), H, S>
+    impl <I, O, H, R, E, S, REST: RestType<I, O>, $($param,)*> AjarsServerAxumHandler<I, O, ($($param,)*), H, S>
     for REST
     where
     I: Serialize + DeserializeOwned + Send + 'static,

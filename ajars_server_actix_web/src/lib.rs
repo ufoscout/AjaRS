@@ -11,13 +11,13 @@ pub mod actix_web {
     pub use ::actix_web::*;
 }
 
-pub trait ActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
+pub trait AjarsServerActixWebHandler<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, T, H> {
     fn to(&self, handler: H) -> Resource;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
     #[allow(non_snake_case)]
-    impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> ActixWebHandler<I, O, ($($param,)*), H>
+    impl <I: Serialize + DeserializeOwned + 'static, O: Serialize + DeserializeOwned + 'static, H, R, E, REST: RestType<I, O>, $($param,)*> AjarsServerActixWebHandler<I, O, ($($param,)*), H>
     for REST
 where
 H: Clone + 'static + Fn(I, $($param,)*) -> R,

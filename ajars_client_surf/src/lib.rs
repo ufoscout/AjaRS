@@ -11,12 +11,12 @@ pub mod surf {
 }
 
 #[derive(Clone)]
-pub struct AjarsSurf {
+pub struct AjarsClientSurf {
     client: Client,
     base_url: String,
 }
 
-impl AjarsSurf {
+impl AjarsClientSurf {
     pub fn new<S: Into<String>>(client: Client, base_url: S) -> Self {
         Self { client, base_url: base_url.into() }
     }

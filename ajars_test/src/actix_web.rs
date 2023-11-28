@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use actix_rt::spawn;
 use ajars::actix_web::actix_web::web::Data;
 use ajars::actix_web::actix_web::{App, HttpRequest, HttpServer, ResponseError};
-use ajars::actix_web::ActixWebHandler;
+use ajars::actix_web::AjarsServerActixWebHandler;
 use ajars::RestType;
 
 use crate::api::*;
