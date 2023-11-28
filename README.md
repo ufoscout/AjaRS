@@ -1,5 +1,10 @@
 # AjaRS
 
+![crates.io](https://img.shields.io/crates/v/ajars.svg)
+![Build Status](https://github.com/ufoscout/ajars/actions/workflows/build_and_test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/ufoscout/ajars/branch/master/graph/badge.svg)](https://codecov.io/gh/ufoscout/ajars)
+
+
 A small [Rust](https://www.rust-lang.org) library to remove the duplicated code between the definition of a Server side REST endpoint 
 and the one of a REST Client that calls it.
 
