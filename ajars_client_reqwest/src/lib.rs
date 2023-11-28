@@ -14,12 +14,12 @@ pub mod reqwest {
 }
 
 #[derive(Clone)]
-pub struct AjarsReqwest {
+pub struct AjarsClientReqwest {
     client: Client,
     base_url: String,
 }
 
-impl AjarsReqwest {
+impl AjarsClientReqwest {
     pub fn new<S: Into<String>>(client: Client, base_url: S) -> Self {
         Self { client, base_url: base_url.into() }
     }

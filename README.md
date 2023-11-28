@@ -91,7 +91,7 @@ mod with_ajars {
     // The the server side endpoint creation now becomes:
     fn server() {
 
-        use ajars::actix_web::ActixWebHandler;
+        use ajars::actix_web::AjarsServerActixWebHandler;
         use ajars::{actix_web::actix_web::{App, HttpServer, ResponseError}};
         use derive_more::{Display, Error};
 
@@ -119,9 +119,9 @@ mod with_ajars {
     // The client, using reqwest, becomes:
     async fn client() {
         
-        use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
+        use ajars::reqwest::{AjarsClientReqwest, reqwest::ClientBuilder};
 
-        let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+        let ajars = AjarsClientReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
         
         // Performs a POST request to http://127.0.0.1:8080/ping
         // The PingRequest and PingResponse types are enforced at compile time
@@ -156,7 +156,7 @@ Example:
 ```rust
 #[cfg(feature = "web")]
 mod web { 
-    use ajars::web::AjarsWeb;
+    use ajars::web::AjarsClientWeb;
     use ajars::Rest;
     use serde::{Deserialize, Serialize};
 
@@ -164,7 +164,7 @@ mod web {
 
     async fn client() {
 
-        let ajars = AjarsWeb::new("").expect("Should build Ajars");
+        let ajars = AjarsClientWeb::new("").expect("Should build Ajars");
         
         let response = ajars
             .request(&PING)           // <-- Here's everything required
@@ -192,14 +192,14 @@ Example:
 #[cfg(feature = "reqwest")]
 mod reqwest { 
     use ajars::Rest;
-    use ajars::reqwest::{AjarsReqwest, reqwest::ClientBuilder};
+    use ajars::reqwest::{AjarsClientReqwest, reqwest::ClientBuilder};
     use serde::{Deserialize, Serialize};
 
     pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
     async fn client() {
 
-        let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
+        let ajars = AjarsClientReqwest::new(ClientBuilder::new().build().unwrap(), "http://127.0.0.1:8080");
         
         let response = ajars
             .request(&PING)           // <-- Here's everything required
@@ -227,14 +227,14 @@ Example:
 #[cfg(feature = "surf")]
 mod surf { 
     use ajars::Rest;
-    use ajars::surf::AjarsSurf;
+    use ajars::surf::AjarsClientSurf;
     use serde::{Deserialize, Serialize};
 
     pub const PING: Rest<PingRequest, PingResponse> = Rest::post("/ping");
 
     async fn client() {
 
-        let ajars = AjarsSurf::new(ajars::surf::surf::client(), "http://127.0.0.1:8080");
+        let ajars = AjarsClientSurf::new(ajars::surf::surf::client(), "http://127.0.0.1:8080");
         
         let response = ajars
             .request(&PING)            // <-- Here's everything required
@@ -265,7 +265,7 @@ Example:
 mod actix_web { 
     use ajars::Rest;
     use serde::{Deserialize, Serialize};
-    use ajars::actix_web::ActixWebHandler;
+    use ajars::actix_web::AjarsServerActixWebHandler;
     use ajars::actix_web::actix_web::{App, HttpServer, ResponseError};
     use derive_more::{Display, Error};
 
@@ -317,7 +317,7 @@ Example:
 mod axum { 
     use ajars::Rest;
     use ajars::axum::axum::{body::{Body, HttpBody}, http::Response, response::IntoResponse, Router};
-    use ajars::axum::AxumHandler;
+    use ajars::axum::AjarsServerAxumHandler;
     use serde::{Deserialize, Serialize};
     use std::net::SocketAddr;
     use derive_more::{Display, Error};

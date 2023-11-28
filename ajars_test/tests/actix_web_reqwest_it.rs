@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use actix_rt::time::sleep;
 use ajars::reqwest::reqwest::ClientBuilder;
-use ajars::reqwest::AjarsReqwest;
+use ajars::reqwest::AjarsClientReqwest;
 use ajars::{Rest, RestFluent, RestType};
 use ajars_test::actix_web::spawn_actix_web;
 use ajars_test::api::Simple;
@@ -34,7 +34,7 @@ async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<Str
     sleep(Duration::from_millis(200)).await;
 
     // Start client
-    let ajars = AjarsReqwest::new(ClientBuilder::new().build().unwrap(), format!("http://127.0.0.1:{}", port));
+    let ajars = AjarsClientReqwest::new(ClientBuilder::new().build().unwrap(), format!("http://127.0.0.1:{}", port));
 
     let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
 
