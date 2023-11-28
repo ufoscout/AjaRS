@@ -107,5 +107,5 @@ actix-web = "4.0"
 futures-util = "0.3"
 
 # Ajax Examples Client Web Yew
-yew = { version = "0.20", features = ["csr"] }
+yew = { version = "0.21", features = ["csr"] }
 wee_alloc = "0.4.5"
