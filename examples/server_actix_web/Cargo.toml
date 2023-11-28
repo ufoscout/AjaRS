@@ -1,5 +1,5 @@
 [package]
-name = "server_actix_web"
+name = "example_server_actix_web"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

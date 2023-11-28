@@ -1,5 +1,5 @@
 [package]
-name = "client_web_yew"
+name = "example_client_web_yew"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

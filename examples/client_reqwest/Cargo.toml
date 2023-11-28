@@ -1,5 +1,5 @@
 [package]
-name = "client_reqwest"
+name = "example_client_reqwest"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

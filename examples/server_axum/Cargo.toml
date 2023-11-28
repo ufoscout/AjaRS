@@ -1,5 +1,5 @@
 [package]
-name = "server_axum"
+name = "example_server_axum"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
