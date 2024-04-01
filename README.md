@@ -1,6 +1,6 @@
 # AjaRS
 
-![crates.io](https://img.shields.io/crates/v/ajars.svg)
+[![crates.io](https://img.shields.io/crates/v/ajars.svg)](https://crates.io/crates/ajars)
 ![Build Status](https://github.com/ufoscout/ajars/actions/workflows/build_and_test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/ufoscout/ajars/branch/main/graph/badge.svg)](https://codecov.io/gh/ufoscout/ajars)
 
