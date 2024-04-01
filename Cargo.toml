@@ -50,7 +50,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 license = "MIT"
 authors = ["Francesco Cina <ufoscout@gmail.com>"]
@@ -62,14 +62,14 @@ documentation = "https://docs.rs/ajars"
 keywords = []
 
 [workspace.dependencies]
-ajars = { path = ".", version = "0.10.0" }
-ajars_server_actix_web = { path = "./ajars_server_actix_web", version = "0.10.0" }
-ajars_server_axum = { path = "./ajars_server_axum", version = "0.10.0" }
-ajars_core = { path = "./ajars_core", version = "0.10.0" }
-ajars_client_reqwest = { path = "./ajars_client_reqwest", version = "0.10.0" }
-ajars_client_surf = { path = "./ajars_client_surf", version = "0.10.0" }
-ajars_client_web = { path = "./ajars_client_web", version = "0.10.0" }
-examples_common = { path = "./examples/examples_common", version = "0.10.0" }
+ajars = { path = ".", version = "0.11.0" }
+ajars_server_actix_web = { path = "./ajars_server_actix_web", version = "0.11.0" }
+ajars_server_axum = { path = "./ajars_server_axum", version = "0.11.0" }
+ajars_core = { path = "./ajars_core", version = "0.11.0" }
+ajars_client_reqwest = { path = "./ajars_client_reqwest", version = "0.11.0" }
+ajars_client_surf = { path = "./ajars_client_surf", version = "0.11.0" }
+ajars_client_web = { path = "./ajars_client_web", version = "0.11.0" }
+examples_common = { path = "./examples/examples_common", version = "0.11.0" }
 
 chrono = { version = "0.4", default-features = false }
 derive_more = "0.99"
