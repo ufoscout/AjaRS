@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
-
-## exit if something fails
+#!/usr/bin/env sh
 set -e
+set -x
+export RUST_BACKTRACE=full
 
 echo 'Attempt ''cargo check'' before publishing'
 cargo check
