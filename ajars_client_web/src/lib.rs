@@ -5,13 +5,12 @@ use std::rc::Rc;
 
 use ajars_core::{HttpMethod, RestType};
 use error::Error;
+use gloo_net::http::{Request, Response};
+use gloo_utils::window;
+use http::Method;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use wasm_bindgen::JsCast as _;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{window, Headers, Request as WebRequest, RequestInit, RequestMode, Response as WebResponse, Window};
-
-use crate::error::WebError;
+use web_sys::RequestMode;
 
 pub mod error;
 
@@ -69,12 +68,12 @@ impl HttpStatus {
 /// Allows to modify and inspect a Request/Response
 pub trait Interceptor {
     /// Called before a request is performed
-    fn before_request(&self, uri: String, opts: RequestInit) -> Result<(String, RequestInit), Error> {
-        Ok((uri, opts))
+    fn before_request(&self, _uri: &str, request: Request) -> Result<Request, Error> {
+        Ok(request)
     }
 
     /// Called after a response is received and before the body is consumed
-    fn after_response(&self, response: Result<WebResponse, Error>) -> Result<WebResponse, Error> {
+    fn after_response(&self, response: Result<Response, Error>) -> Result<Response, Error> {
         response
     }
 }
@@ -85,7 +84,6 @@ pub struct DoNothingInterceptor {}
 impl Interceptor for DoNothingInterceptor {}
 
 pub struct AjarsClientWeb {
-    window: Window,
     interceptor: Rc<dyn Interceptor>,
     base_url: String,
 }
@@ -99,8 +97,7 @@ impl AjarsClientWeb {
         base_url: P,
         interceptor: Rc<dyn Interceptor>,
     ) -> Result<AjarsClientWeb, Error> {
-        let window = window().ok_or(Error::MissingWindow)?;
-        Ok(AjarsClientWeb { window, interceptor, base_url: base_url.into() })
+        Ok(AjarsClientWeb { interceptor, base_url: base_url.into() })
     }
 
     pub fn request<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>(
@@ -109,7 +106,7 @@ impl AjarsClientWeb {
     ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder::new(rest, &self.window, url, self.interceptor.as_ref())
+        RequestBuilder::new(rest, url, self.interceptor.as_ref())
             .add_header("Content-Type", "application/json")
     }
 }
@@ -118,7 +115,6 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
     rest: &'a REST,
     interceptor: &'a dyn Interceptor,
     headers: HashMap<String, String>,
-    window: &'a Window,
     url: String,
     phantom_i: PhantomData<I>,
     phantom_o: PhantomData<O>,
@@ -127,10 +123,9 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
 impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
     RequestBuilder<'a, I, O, REST>
 {
-    pub fn new(rest: &'a REST, window: &'a Window, url: String, interceptor: &'a dyn Interceptor) -> Self {
+    pub fn new(rest: &'a REST, url: String, interceptor: &'a dyn Interceptor) -> Self {
         RequestBuilder {
             rest,
-            window,
             interceptor,
             url,
             headers: HashMap::new(),
@@ -148,9 +143,9 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     /// Enable HTTP basic authentication.
     pub fn basic_auth(self, username: &str, password: Option<&str>) -> Result<Self, Error> {
         let user_pass = format!("{}:{}", username, password.unwrap_or_default());
-        let encoded_user_pass = self.window.btoa(&user_pass).map_err(|err| Error::Builder {
+        let encoded_user_pass = window().btoa(&user_pass).map_err(|err| Error::Builder {
             context: "Failed to encode in base64 the basic auth string".to_owned(),
-            source: err.into(),
+            error: format!("{:?}", err),
         })?;
 
         Ok(self.add_header("AUTHORIZATION", format!("Basic {}", encoded_user_pass)))
@@ -168,90 +163,73 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     /// Sends the Request to the target URL, returning a
     /// future Response.
     pub async fn send(self, data: &I) -> Result<O, Error> {
-        let headers = Headers::new().map_err(|err| Error::Builder {
-            context: "Failed to create Headers object".to_owned(),
-            source: WebError(format!("{:?}", err)),
-        })?;
 
-        for (header_key, header_value) in self.headers {
-            headers.append(&header_key, &header_value).map_err(|err| Error::Builder {
-                context: format!("Failed to append header with key [{}] and value [{}]", header_key, header_value),
-                source: WebError(format!("{:?}", err)),
-            })?;
-        }
+        let request = match self.rest.method() {
+            HttpMethod::DELETE => as_query_string(&self.url, http::Method::DELETE, &self.headers, data),
+            HttpMethod::GET => as_query_string(&self.url, http::Method::GET, &self.headers, data),
+            HttpMethod::POST => as_body(&self.url, http::Method::POST, &self.headers, data),
+            HttpMethod::PUT => as_body(&self.url, http::Method::PUT, &self.headers, data),
+        }?;
 
-        let mut opts = RequestInit::new();
-        opts.mode(RequestMode::Cors);
-        opts.headers(&headers);
+        let request = self.interceptor.before_request(&self.url, request)?;
 
-        let mut uri = self.url;
-
-        match self.rest.method() {
-            HttpMethod::DELETE => {
-                as_query_string(&mut opts, &mut uri, "DELETE", data)?;
-            }
-            HttpMethod::GET => {
-                as_query_string(&mut opts, &mut uri, "GET", data)?;
-            }
-            HttpMethod::POST => {
-                as_body(&mut opts, "POST", data)?;
-            }
-            HttpMethod::PUT => {
-                as_body(&mut opts, "PUT", data)?;
-            }
-        };
-
-        let (uri, opts) = self.interceptor.before_request(uri, opts)?;
-
-        let request = WebRequest::new_with_str_and_init(&uri, &opts).map_err(|err| Error::Builder {
-            context: format!("Failed to create request for {}", uri),
-            source: WebError(format!("{:?}", err)),
-        })?;
-
-        let response = do_web_request(self.window, request).await;
+        let response = request.send().await.map_err(|err| Error::Builder {
+            context: format!("Failed to send request"),
+            error: format!("{:?}", err),
+        });
 
         let response = self.interceptor.after_response(response)?;
-
         into_http_response(response).await
     }
 }
 
 fn as_query_string<I: Serialize + DeserializeOwned>(
-    opts: &mut RequestInit,
-    uri: &mut String,
-    method: &str,
+    uri: &str,
+    method: Method,
+    headers: &HashMap<String, String>,
     data: &I,
-) -> Result<(), Error> {
-    opts.method(method);
+) -> Result<gloo_net::http::Request, Error> {
+    let mut uri = uri.to_owned();
     uri.push('?');
     uri.push_str(&serde_urlencoded::to_string(data).map_err(|err| Error::Builder {
         context: "Failed to serialize data as query string".to_owned(),
-        source: WebError(format!("{:?}", err)),
+        error: format!("{:?}", err),
     })?);
-    Ok(())
-}
+    let mut request = gloo_net::http::RequestBuilder::new(&uri)
+        .method(method)
+        .mode(RequestMode::Cors);
 
-fn as_body<I: Serialize + DeserializeOwned>(opts: &mut RequestInit, method: &str, data: &I) -> Result<(), Error> {
-    opts.method(method);
-    opts.body(Some(&serde_wasm_bindgen::to_value(&data).map_err(|err| Error::Builder {
-        context: "Failed to serialize data as JSON body".to_owned(),
-        source: WebError(format!("{:?}", err)),
-    })?));
-    Ok(())
-}
+    for (header_key, header_value) in headers {
+        request = request.header(header_key, header_value);
+    }
 
-async fn do_web_request(client: &Window, request: WebRequest) -> Result<WebResponse, Error> {
-    let response = JsFuture::from(client.fetch_with_request(&request))
-        .await
-        .map_err(|err| Error::Builder { context: "Failed to issue request".to_owned(), source: err.into() })?;
-
-    response.dyn_into::<WebResponse>().map_err(|err| Error::Builder {
-        context: "Future did not resolve into a web-sys Response".to_owned(),
-        source: err.into(),
+    request.build().map_err(|err| Error::Builder {
+        context: "Failed to build Request".to_owned(),
+        error: format!("{:?}", err),
     })
 }
 
-async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebResponse) -> Result<O, Error> {
+fn as_body<I: Serialize + DeserializeOwned>(
+    uri: &str,
+    method: Method,
+    headers: &HashMap<String, String>,
+    data: &I,
+) -> Result<Request, Error> {
+    let mut request = gloo_net::http::RequestBuilder::new(&uri)
+        .method(method)
+        .mode(RequestMode::Cors);
+    
+    for (header_key, header_value) in headers {
+        request = request.header(header_key, header_value);
+    }
+
+    request.json(data).map_err(|err| Error::Builder {
+        context: "Failed to serialize data as JSON body".to_owned(),
+        error: format!("{:?}", err),
+    })
+}
+
+async fn into_http_response<O: Serialize + DeserializeOwned>(response: Response) -> Result<O, Error> {
     let status = HttpStatus::from(response.status());
 
     // This 'if' check is how it is performed by Reqwest
@@ -259,19 +237,13 @@ async fn into_http_response<O: Serialize + DeserializeOwned>(response: WebRespon
         Err(Error::Response {
             status,
             context: format!("Error HTTP status code received: {}", status.status()),
-            source: WebError(format!("{:?}", response)),
+            error: format!("Status code error: {:?}", response),
         })
     } else {
-        let value =
-            JsFuture::from(response.json().map_err(|err| Error::response(status, "Failed to read JSON body", err))?)
-                .await
-                .map_err(|err| Error::response(status, "Failed to read JSON body", err))?;
-
-        let data: O = serde_wasm_bindgen::from_value(value).map_err(|err| Error::Builder {
-            context: "Failed to deserialize data as JSON body from Response".to_owned(),
-            source: WebError(format!("{:?}", err)),
-        })?;
-
-        Ok(data)
+        response.json().await.map_err(|err| Error::Response {
+            status,
+            context: format!("Failed to read JSON body: {}", status.status()),
+            error: format!("{:?}", err),
+        })
     }
 }

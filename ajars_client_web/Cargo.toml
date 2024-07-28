@@ -14,23 +14,22 @@ keywords.workspace = true
 
 [dependencies]
 ajars_core = { workspace = true }
+gloo-net = { workspace = true }
+gloo-utils = { workspace = true }
+http = { workspace = true }
 serde = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
 serde_urlencoded = { workspace = true }
 thiserror = { workspace = true }
-gloo-net = { workspace = true }
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
 
 [dependencies.web-sys]
 workspace = true
 features = [
-  'Headers',
-  'Request',
-  'RequestInit',
+#   'Headers',
+#   'Request',
+#   'RequestInit',
   'RequestMode',
-  'Response',
-  'Window',
+#   'Response',
+#   'Window',
 ]
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
