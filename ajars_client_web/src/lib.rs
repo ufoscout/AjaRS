@@ -106,8 +106,7 @@ impl AjarsClientWeb {
     ) -> RequestBuilder<'a, I, O, REST> {
         let url = format!("{}{}", &self.base_url, rest.path());
 
-        RequestBuilder::new(rest, url, self.interceptor.as_ref())
-            .add_header("Content-Type", "application/json")
+        RequestBuilder::new(rest, url, self.interceptor.as_ref()).add_header("Content-Type", "application/json")
     }
 }
 
@@ -163,7 +162,6 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
     /// Sends the Request to the target URL, returning a
     /// future Response.
     pub async fn send(self, data: &I) -> Result<O, Error> {
-
         let request = match self.rest.method() {
             HttpMethod::DELETE => as_query_string(&self.url, http::Method::DELETE, &self.headers, data),
             HttpMethod::GET => as_query_string(&self.url, http::Method::GET, &self.headers, data),
@@ -195,18 +193,15 @@ fn as_query_string<I: Serialize + DeserializeOwned>(
         context: "Failed to serialize data as query string".to_owned(),
         error: format!("{:?}", err),
     })?);
-    let mut request = gloo_net::http::RequestBuilder::new(&uri)
-        .method(method)
-        .mode(RequestMode::Cors);
+    let mut request = gloo_net::http::RequestBuilder::new(&uri).method(method).mode(RequestMode::Cors);
 
     for (header_key, header_value) in headers {
         request = request.header(header_key, header_value);
     }
 
-    request.build().map_err(|err| Error::Builder {
-        context: "Failed to build Request".to_owned(),
-        error: format!("{:?}", err),
-    })
+    request
+        .build()
+        .map_err(|err| Error::Builder { context: "Failed to build Request".to_owned(), error: format!("{:?}", err) })
 }
 
 fn as_body<I: Serialize + DeserializeOwned>(
@@ -215,10 +210,8 @@ fn as_body<I: Serialize + DeserializeOwned>(
     headers: &HashMap<String, String>,
     data: &I,
 ) -> Result<Request, Error> {
-    let mut request = gloo_net::http::RequestBuilder::new(uri)
-        .method(method)
-        .mode(RequestMode::Cors);
-    
+    let mut request = gloo_net::http::RequestBuilder::new(uri).method(method).mode(RequestMode::Cors);
+
     for (header_key, header_value) in headers {
         request = request.header(header_key, header_value);
     }
