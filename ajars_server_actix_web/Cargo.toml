@@ -15,7 +15,7 @@ keywords.workspace = true
 [dependencies]
 ajars_core = { workspace = true }
 
-actix-web = { workspace = true, default-features = false}
+actix-web = { workspace = true }
 futures-util = { workspace = true }
 serde = { workspace = true }
 

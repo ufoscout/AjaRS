@@ -12,14 +12,14 @@ examples_common = { workspace = true }
 yew = { workspace = true }
 wee_alloc = { workspace = true }
 
-[profile.release]
-# less code to include into binary
-panic = 'abort' 
-# optimization over all codebase ( better optimization, slower build )
-codegen-units = 1
-# optimization for size ( more aggressive )
-opt-level = 'z' 
-# optimization for size 
-# opt-level = 's' 
-# link time optimization using using whole-program analysis
-lto = true
+# [profile.release]
+# # less code to include into binary
+# panic = 'abort' 
+# # optimization over all codebase ( better optimization, slower build )
+# codegen-units = 1
+# # optimization for size ( more aggressive )
+# opt-level = 'z' 
+# # optimization for size 
+# # opt-level = 's' 
+# # link time optimization using using whole-program analysis
+# lto = true

@@ -174,7 +174,7 @@ impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST:
         let request = self.interceptor.before_request(&self.url, request)?;
 
         let response = request.send().await.map_err(|err| Error::Builder {
-            context: format!("Failed to send request"),
+            context: "Failed to send request".to_string(),
             error: format!("{:?}", err),
         });
 
@@ -215,7 +215,7 @@ fn as_body<I: Serialize + DeserializeOwned>(
     headers: &HashMap<String, String>,
     data: &I,
 ) -> Result<Request, Error> {
-    let mut request = gloo_net::http::RequestBuilder::new(&uri)
+    let mut request = gloo_net::http::RequestBuilder::new(uri)
         .method(method)
         .mode(RequestMode::Cors);
     

@@ -15,4 +15,4 @@ keywords.workspace = true
 [dependencies]
 ajars_core = { workspace = true }
 serde = { workspace = true }
-surf = { workspace = true, default-features = false }
+surf = { workspace = true }
