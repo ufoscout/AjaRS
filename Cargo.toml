@@ -21,7 +21,6 @@ ajars_client_surf = { workspace = true, optional = true }
 ajars_client_web = { workspace = true, optional = true }
 
 [dev-dependencies]
-derive_more = { workspace = true }
 serde = { workspace = true }
 surf = { workspace = true }
 tokio = { workspace = true }
@@ -72,12 +71,11 @@ ajars_client_web = { path = "./ajars_client_web", version = "0.11.0" }
 examples_common = { path = "./examples/examples_common", version = "0.11.0" }
 
 chrono = { version = "0.4", default-features = false }
-derive_more = "0.99"
 port_check = "0.2"
 rand = "0.8"
 serde = { version = "1", default-features = false }
 serde_json = "1"
-thiserror = "1"
+thiserror = "2"
 tokio = { version = "1", default-features = false }
 
 # Ajax Client Reqwest
@@ -99,7 +97,7 @@ web-sys ={ version = "0.3", default-features = false }
 # Ajax Server Axum
 axum = { version = "0.7", features = ["json", "query"] }
 http-body-util = "0.1.0"
-tower = "0.4"
+tower = "0.5"
 
 # Ajax Server Actix Web
 actix-rt = "2"
