@@ -48,8 +48,8 @@ pub struct RequestBuilder<'a, I: Serialize + DeserializeOwned, O: Serialize + De
     phantom_o: PhantomData<O>,
 }
 
-impl<'a, I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
-    RequestBuilder<'a, I, O, REST>
+impl<I: Serialize + DeserializeOwned, O: Serialize + DeserializeOwned, REST: RestType<I, O>>
+    RequestBuilder<'_, I, O, REST>
 {
     /// Sends the Request to the target URL, returning a
     /// future Response.
