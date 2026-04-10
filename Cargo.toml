@@ -82,7 +82,7 @@ tokio = { version = "1", default-features = false }
 
 # Ajax Client Reqwest
 http = { version = "1", default-features = false }
-reqwest = { version = "0.12", default-features = false, features = ["json"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "query"] }
 
 # Ajax Client Surf
 surf = { version = "2.3" }
