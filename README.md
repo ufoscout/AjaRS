@@ -103,7 +103,7 @@ mod with_ajars {
 
         #[derive(Debug, Display, Error)]
         enum UserError {
-            #[display(fmt = "Validation error on field: {}", field)]
+            #[display("Validation error on field: {}", field)]
             ValidationError { field: String },
         }
         impl ResponseError for UserError {}
@@ -288,7 +288,7 @@ mod actix_web {
 
     #[derive(Debug, Display, Error)]
     enum UserError {
-        #[display(fmt = "Validation error on field: {}", field)]
+        #[display("Validation error on field: {}", field)]
         ValidationError { field: String },
     }
     impl ResponseError for UserError {}
@@ -341,7 +341,7 @@ mod axum {
 
     #[derive(Debug, Display, Error)]
     enum UserError {
-        #[display(fmt = "Validation error on field: {}", field)]
+        #[display("Validation error on field: {}", field)]
         ValidationError { field: String },
     }
 

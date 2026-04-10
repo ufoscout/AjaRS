@@ -105,11 +105,11 @@ mod tests {
     async fn should_create_a_delete_endpoint() {
         // Arrange
         let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = test::init_service(App::new().service(rest.to(ping))).await;
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         let req = test::TestRequest::delete().uri(&format!("{}?message={}", rest.path(), payload.message)).to_request();
 
@@ -127,11 +127,11 @@ mod tests {
     #[actix_rt::test]
     async fn should_create_a_get_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = test::init_service(App::new().service(rest.to(ping))).await;
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         let req = test::TestRequest::get().uri(&format!("{}?message={}", rest.path(), payload.message)).to_request();
 
@@ -149,11 +149,11 @@ mod tests {
     #[actix_rt::test]
     async fn should_create_a_post_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = test::init_service(App::new().service(rest.to(ping))).await;
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         let req = test::TestRequest::post().uri(rest.path()).set_json(&payload).to_request();
 
@@ -171,11 +171,11 @@ mod tests {
     #[actix_rt::test]
     async fn should_create_a_put_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = test::init_service(App::new().service(rest.to(ping))).await;
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         let req = test::TestRequest::put().uri(rest.path()).set_json(&payload).to_request();
 

@@ -151,11 +151,11 @@ mod tests {
     async fn should_create_a_delete_endpoint() {
         // Arrange
         let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = rest.to(ping).with_state(());
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         // Act
         let response = app
@@ -184,11 +184,11 @@ mod tests {
     #[tokio::test]
     async fn should_create_a_get_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::get(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = rest.to(ping).layer(Extension(()));
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         // Act
         let response = app
@@ -217,11 +217,11 @@ mod tests {
     #[tokio::test]
     async fn should_create_a_post_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::post(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = rest.to(ping).layer(Extension(()));
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         // Act
         let response = app
@@ -250,11 +250,11 @@ mod tests {
     #[tokio::test]
     async fn should_create_a_put_endpoint() {
         // Arrange
-        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<usize>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::put(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = rest.to(ping).layer(Extension(()));
 
-        let payload = PingRequest { message: format!("message{}", rand::random::<usize>()) };
+        let payload = PingRequest { message: format!("message{}", rand::random::<u64>()) };
 
         // Act
         let response = app
@@ -284,7 +284,7 @@ mod tests {
     async fn route_should_accept_variable_number_of_params() {
         // Arrange
         let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<usize>()));
+            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         // Accept 1 param
         let _ = rest

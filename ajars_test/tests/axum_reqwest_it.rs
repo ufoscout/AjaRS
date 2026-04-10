@@ -11,18 +11,18 @@ use tokio::time::sleep;
 async fn test_reqwest_rest() {
     perform_reqwest_call(&RestFluent::<Simple<String>, Simple<String>>::delete(format!(
         "/api/{}",
-        rand::random::<usize>()
+        rand::random::<u64>()
     )))
     .await;
     perform_reqwest_call(&Rest::<Simple<String>, Simple<String>>::get("/api/const")).await;
     perform_reqwest_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!(
         "/api/{}",
-        rand::random::<usize>()
+        rand::random::<u64>()
     )))
     .await;
     perform_reqwest_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!(
         "/api/{}",
-        rand::random::<usize>()
+        rand::random::<u64>()
     )))
     .await;
 }
@@ -36,7 +36,7 @@ async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<Str
     // Start client
     let ajars = AjarsClientReqwest::new(ClientBuilder::new().build().unwrap(), format!("http://127.0.0.1:{}", port));
 
-    let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
+    let req_data = Simple { inner: format!("{}", rand::random::<u64>()) };
 
     // Act
     let response = ajars.request(rest).send(&req_data).await;

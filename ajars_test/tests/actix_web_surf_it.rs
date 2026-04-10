@@ -10,14 +10,14 @@ use ajars_test::api::Simple;
 async fn test_surf_rest() {
     perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::delete(format!(
         "/api/{}",
-        rand::random::<usize>()
+        rand::random::<u64>()
     )))
     .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::get(format!("/api/{}", rand::random::<usize>())))
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::get(format!("/api/{}", rand::random::<u64>())))
         .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!("/api/{}", rand::random::<usize>())))
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!("/api/{}", rand::random::<u64>())))
         .await;
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!("/api/{}", rand::random::<usize>())))
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!("/api/{}", rand::random::<u64>())))
         .await;
 }
 
@@ -30,7 +30,7 @@ async fn perform_surf_call(rest: &RestFluent<Simple<String>, Simple<String>>) {
     // Start client
     let req = AjarsClientSurf::new(ajars::surf::surf::client(), format!("http://127.0.0.1:{}", port));
 
-    let req_data = Simple { inner: format!("{}", rand::random::<usize>()) };
+    let req_data = Simple { inner: format!("{}", rand::random::<u64>()) };
 
     // Act
     let response = req.request(rest).send(&req_data).await;
