@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 #[derive(Clone)]
 pub enum HttpMethod {

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use ajars::reqwest::reqwest::ClientBuilder;
 use ajars::reqwest::AjarsClientReqwest;
+use ajars::reqwest::reqwest::ClientBuilder;
 use ajars::{Rest, RestFluent, RestType};
 use ajars_test::api::Simple;
 use ajars_test::axum::spawn_axum;
@@ -20,11 +20,8 @@ async fn test_reqwest_rest() {
         rand::random::<u64>()
     )))
     .await;
-    perform_reqwest_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!(
-        "/api/{}",
-        rand::random::<u64>()
-    )))
-    .await;
+    perform_reqwest_call(&RestFluent::<Simple<String>, Simple<String>>::put(format!("/api/{}", rand::random::<u64>())))
+        .await;
 }
 
 async fn perform_reqwest_call<REST: 'static + Clone + Send + RestType<Simple<String>, Simple<String>>>(rest: &REST) {

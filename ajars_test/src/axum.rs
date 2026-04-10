@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 
 use ::axum::extract::State;
+use ajars::RestType;
+use ajars::axum::AjarsServerAxumHandler;
 use ajars::axum::axum::body::Body;
 use ajars::axum::axum::http::{self, Response};
 use ajars::axum::axum::response::IntoResponse;
 use ajars::axum::axum::{self, Router};
-use ajars::axum::AjarsServerAxumHandler;
-use ajars::RestType;
 use tokio::net::TcpListener;
 
 use crate::api::*;

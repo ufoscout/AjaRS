@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
 use ajars_core::{HttpMethod, RestType};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use crate::surf::{Client, RequestBuilder as SurfRequestBuilder};
 

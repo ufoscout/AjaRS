@@ -1,6 +1,6 @@
-use ajars::surf::{surf, AjarsClientSurf};
-use examples_common::hello::{HelloRequest, HELLO};
-use examples_common::ping::{PingRequest, PING};
+use ajars::surf::{AjarsClientSurf, surf};
+use examples_common::hello::{HELLO, HelloRequest};
+use examples_common::ping::{PING, PingRequest};
 
 #[tokio::main]
 async fn main() {

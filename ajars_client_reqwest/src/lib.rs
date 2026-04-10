@@ -4,8 +4,8 @@ use std::marker::PhantomData;
 use ::reqwest::header::{HeaderName, HeaderValue};
 use ajars_core::{HttpMethod, RestType};
 use http::HeaderMap;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use crate::reqwest::{Client, RequestBuilder as ReqwestRequestBuilder};
 

@@ -5,8 +5,8 @@ use ::axum::response::IntoResponse;
 use ::axum::routing::{delete, get, post, put};
 use ::axum::{Json, Router};
 use ajars_core::{HttpMethod, RestType};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 pub mod axum {
     pub use ::axum::*;
@@ -110,7 +110,7 @@ mod tests {
 
     use ::axum::body::Body;
     use ::axum::extract::{Extension, Query, State};
-    use ::axum::http::{header, Method, Request, Response, StatusCode};
+    use ::axum::http::{Method, Request, Response, StatusCode, header};
     use ajars_core::RestFluent;
     use http_body_util::BodyExt; // for `collect`
     use serde::{Deserialize, Serialize};
@@ -150,8 +150,7 @@ mod tests {
     #[tokio::test]
     async fn should_create_a_delete_endpoint() {
         // Arrange
-        let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = rest.to(ping).with_state(());
 
@@ -283,8 +282,7 @@ mod tests {
     #[tokio::test]
     async fn route_should_accept_variable_number_of_params() {
         // Arrange
-        let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         // Accept 1 param
         let _ = rest

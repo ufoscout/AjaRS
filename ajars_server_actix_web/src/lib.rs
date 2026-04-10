@@ -4,8 +4,8 @@ use ::actix_web::web::{self, Json, Query};
 use ::actix_web::{FromRequest, Resource, ResponseError};
 use ajars_core::{HttpMethod, RestType};
 use futures_util::future::FutureExt;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 pub mod actix_web {
     pub use ::actix_web::*;
@@ -67,7 +67,7 @@ mod tests {
 
     use std::fmt::Display;
 
-    use ::actix_web::http::{header, StatusCode};
+    use ::actix_web::http::{StatusCode, header};
     use ::actix_web::{App, HttpRequest};
     use ajars_core::RestFluent;
     use serde::{Deserialize, Serialize};
@@ -104,8 +104,7 @@ mod tests {
     #[actix_rt::test]
     async fn should_create_a_delete_endpoint() {
         // Arrange
-        let rest =
-            RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
+        let rest = RestFluent::<PingRequest, PingResponse>::delete(format!("/api/something/{}", rand::random::<u64>()));
 
         let app = test::init_service(App::new().service(rest.to(ping))).await;
 

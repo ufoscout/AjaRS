@@ -2,10 +2,10 @@ use std::fmt::Display;
 use std::net::SocketAddr;
 
 use ajars::axum::AjarsServerAxumHandler;
+use axum::Router;
 use axum::body::Body;
 use axum::http::{Method, Response, Uri};
 use axum::response::IntoResponse;
-use axum::Router;
 use chrono::Local;
 use examples_common::hello::*;
 use examples_common::ping::*;

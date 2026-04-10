@@ -1,18 +1,15 @@
 use std::time::Duration;
 
-use ajars::surf::AjarsClientSurf;
 use ajars::RestFluent;
+use ajars::surf::AjarsClientSurf;
 use ajars_test::api::Simple;
 use ajars_test::axum::spawn_axum;
 use tokio::time::sleep;
 
 #[actix_rt::test]
 async fn test_surf_rest() {
-    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::delete(format!(
-        "/api/{}",
-        rand::random::<u64>()
-    )))
-    .await;
+    perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::delete(format!("/api/{}", rand::random::<u64>())))
+        .await;
     perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::get(format!("/api/{}", rand::random::<u64>())))
         .await;
     perform_surf_call(&RestFluent::<Simple<String>, Simple<String>>::post(format!("/api/{}", rand::random::<u64>())))

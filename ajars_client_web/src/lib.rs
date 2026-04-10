@@ -8,8 +8,8 @@ use error::Error;
 use gloo_net::http::{Request, Response};
 use gloo_utils::window;
 use http::Method;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use web_sys::RequestMode;
 
 pub mod error;
