@@ -5,10 +5,6 @@ use ajars::web::error::Error;
 use examples_common::ping::{PING, PingRequest, PingResponse};
 use yew::prelude::*;
 
-// Use `wee_alloc` as the global allocator.
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 enum Msg {
     PingSend,
     PingSetResponse(Result<PingResponse, Error>),

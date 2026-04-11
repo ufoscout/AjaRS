@@ -10,7 +10,6 @@ license.workspace = true
 ajars = { workspace = true, features = ["web"] }
 examples_common = { workspace = true }
 yew = { workspace = true }
-wee_alloc = { workspace = true }
 
 # [profile.release]
 # # less code to include into binary

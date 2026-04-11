@@ -108,4 +108,3 @@ futures-util = "0.3"
 
 # Ajax Examples Client Web Yew
 yew = { version = "0.23", features = ["csr"] }
-wee_alloc = "0.4.5"
